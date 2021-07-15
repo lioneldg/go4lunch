@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Go4Lunch</string>
+    <string name="facebook_application_id">952362162004154</string>
+    <string name="fb_login_protocol_scheme">fb952362162004154</string>
+    <!-- BOTTOM NAVIGATION VIEW -->
+    <string name="bottom_navigation_menu_map">Map View</string>
+    <string name="bottom_navigation_menu_list">List View</string>
+    <string name="bottom_navigation_menu_workmates">Workmates</string>
+</resources>
