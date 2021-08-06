@@ -1,29 +1,61 @@
 package com.example.go4lunch;
 
+import static com.example.go4lunch.BuildConfig.MAPS_API_KEY;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.SearchView;
 
 import com.example.go4lunch.databinding.ActivityMainBinding;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
 import com.firebase.ui.auth.IdpResponse;
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
     private ActivityMainBinding binding;
     private List<AuthUI.IdpConfig> providers;
     private Intent signInIntent;
@@ -32,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
     private MapFragment mapFragment;
     private SpotsFragment spotsFragment;
     private WorkmatesFragment workmatesFragment;
+    private SearchView searchView;
+    private DrawerLayout drawer;
 
     //connection
     private final ActivityResultLauncher<Intent> signInLauncher = registerForActivityResult(
@@ -44,14 +78,43 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        setSupportActionBar(binding.toolbar);
+
+        //drawer
+        drawer = binding.drawer;
+        ActionBarDrawerToggle drawerToggle =  new ActionBarDrawerToggle(this, drawer, R.string.open, R.string.close);
+        drawer.addDrawerListener(drawerToggle);
+        drawerToggle.syncState();
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        MenuItem yourLunch = binding.navigationView.getMenu().findItem(R.id.your_lunch);
+        MenuItem settings = binding.navigationView.getMenu().findItem(R.id.settings);
+        MenuItem logout = binding.navigationView.getMenu().findItem(R.id.logout);
+
+        yourLunch.setOnMenuItemClickListener(menuItem -> {
+                    return false;
+                }
+        );
+
+        settings.setOnMenuItemClickListener(menuItem -> {
+                    return false;
+                }
+        );
+
+        logout.setOnMenuItemClickListener(menuItem -> {
+                signOut();
+                return false;
+            }
+        );
 
         //providers
-        providers = Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build(),new AuthUI.IdpConfig.GoogleBuilder().build(),new AuthUI.IdpConfig.FacebookBuilder().build());
+        providers = Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build(),new AuthUI.IdpConfig.GoogleBuilder().build(),new AuthUI.IdpConfig.FacebookBuilder().build(), new AuthUI.IdpConfig.TwitterBuilder().build());
+
         //signIn intent
         signInIntent = AuthUI.getInstance()
                 .createSignInIntentBuilder()
                 .setAvailableProviders(providers)
                 .build();
+
         //lunch sign in
         signInLauncher.launch(signInIntent);
 
@@ -60,30 +123,63 @@ public class MainActivity extends AppCompatActivity {
         workmatesFragment = new WorkmatesFragment();
 
         fm = getSupportFragmentManager();
-        ft = fm.beginTransaction();
-        ft.add(binding.activityMain.getId(),mapFragment);
-        ft.commit();
+
         this.setNavigationListener();
     }
 
-    private void setNavigationListener(){
-        binding.bottomBar.setOnItemSelectedListener(item -> changeView(item.getItemId()));
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        drawer.openDrawer(GravityCompat.START);
+        return super.onOptionsItemSelected(item);
     }
 
-    private Boolean changeView(Integer integer){
+    //SearchBar
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.options_menu, menu);
+        searchView = (SearchView) menu.findItem(R.id.search).getActionView();
+        searchView.setQueryHint("Search restaurants");
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+
+                return false;
+            }
+        });
+        return true;
+    }
+
+    private void setNavigationListener(){
+        binding.bottomBar.setOnItemSelectedListener(item -> bottomBarChangeView(item.getItemId()));
+    }
+
+    private void changeFragment(Fragment frag){
         ft = fm.beginTransaction();
+        ft.replace(binding.mainFrameLayout.getId(),frag);
+        ft.commit();
+    }
+
+    private Boolean bottomBarChangeView(Integer integer){
         switch (integer) {
             case R.id.action_map:
-                ft.replace(binding.activityMain.getId(),mapFragment);
-                ft.commit();
+                setTitle("I'm Hungry!");
+                changeFragment(mapFragment);
+                searchView.setVisibility(View.VISIBLE);
                 break;
             case R.id.action_spots_list:
-                ft.replace(binding.activityMain.getId(),spotsFragment);
-                ft.commit();
+                setTitle("I'm Hungry!");
+                changeFragment(spotsFragment);
+                searchView.setVisibility(View.VISIBLE);
                 break;
             case R.id.action_workmates_list:
-                ft.replace(binding.activityMain.getId(),workmatesFragment);
-                ft.commit();
+                changeFragment(workmatesFragment);
+                searchView.setVisibility(View.INVISIBLE);
+                setTitle("Available workmates");
         }
         return true;
     }
@@ -93,6 +189,7 @@ public class MainActivity extends AppCompatActivity {
         if (result.getResultCode() == RESULT_OK) {
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             Snackbar.make(binding.getRoot(), "CONNECTÉ", Snackbar.LENGTH_SHORT).show();
+            changeFragment(mapFragment);
         } else {
             Snackbar.make(binding.getRoot(), "NON CONNECTÉ", Snackbar.LENGTH_SHORT).show();
         }
@@ -105,12 +202,6 @@ public class MainActivity extends AppCompatActivity {
                         Snackbar.make(binding.getRoot(), "DÉCONNECTÉ", Snackbar.LENGTH_SHORT).show();
                     }
                 });
-    }
-
-    /*@Override
-    protected void onRestart() {
-        super.onRestart();
-        signOut();
         signInLauncher.launch(signInIntent);
-    }*/
+    }
 }

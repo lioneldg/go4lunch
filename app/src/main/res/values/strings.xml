@@ -6,4 +6,7 @@
     <string name="bottom_navigation_menu_map">Map View</string>
     <string name="bottom_navigation_menu_list">List View</string>
     <string name="bottom_navigation_menu_workmates">Workmates</string>
+    <string name="search_hint">Search restaurants</string>
+    <string name="open">Open</string>
+    <string name="close">close</string>
 </resources>
