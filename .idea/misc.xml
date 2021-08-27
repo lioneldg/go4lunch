@@ -3,7 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable/ic_baseline_local_dining_24.xml" value="0.2953703703703704" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.5122282608695652" />
+        <entry key="app/src/main/res/layout/spots_fragment.xml" value="0.325" />
       </map>
     </option>
   </component>
