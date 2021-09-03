@@ -15,6 +15,8 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.go4lunch.DI.DI;
 import com.example.go4lunch.databinding.SpotsFragmentBinding;
@@ -43,66 +45,17 @@ import java.util.concurrent.TimeUnit;
 
 public class SpotsFragment extends Fragment {
     private SpotsFragmentBinding binding;
-    private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
-    private ImageView imageTest;
-    //FAIRE UN RV ET INTEGRER LES INFOS ET IMAGES POUR CHAQUE CELLULES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    private RecyclerView rv;
+
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = SpotsFragmentBinding.inflate(inflater, container, false);
-        View view = binding.getRoot();
-        List<NearbySearchResult> nearbySearchResultList = service.getNearbySearchResults();
-        imageTest = binding.imageTest;
-        for(int i = 0; nearbySearchResultList.size() > i; i++){
-            String photoRef = nearbySearchResultList.get(i).getPhoto_reference();
-            Bitmap bmp = placeSearchImage(photoRef);
-            if(bmp != null){
-                imageTest.setImageBitmap(bmp);
-            }
-        }
 
-        return view;
+        rv = binding.list;
+        rv.setLayoutManager(new LinearLayoutManager(getContext()));
+        rv.setAdapter(new RvAdapter());
+
+        return binding.getRoot();
     }
-
-    private Bitmap placeSearchImage(String photoRef){
-        String photoUrl = "https://maps.googleapis.com/maps/api/place/photo?photo_reference=" + photoRef
-                + "&maxwidth=400"
-                + "&key=" + MAPS_API_KEY;
-        return getPlaceImageExecutor(photoUrl);
-    }
-
-    private Bitmap getPlaceImageExecutor(String url){
-        //execute query
-        Bitmap result = null;
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<Bitmap> future = executor.submit(() -> {
-            try {
-                URL requestUrl = new URL(url);
-                HttpURLConnection connection = (HttpURLConnection)requestUrl.openConnection();
-                connection.setRequestMethod("GET");
-                connection.connect();
-                int responseCode = connection.getResponseCode();
-
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    InputStream in = new URL(url).openStream();
-                    return BitmapFactory.decodeStream(in);
-                }
-                else {
-                    Log.i("test", "Unsuccessful HTTP Response Code: " + responseCode);
-                }
-            } catch (MalformedURLException e) {
-                Log.e("test", "Error processing Places API URL", e);
-            } catch (IOException e) {
-                Log.e("test", "Error connecting to Places API", e);
-            }
-            return null;
-        });
-        try {
-            result = future.get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
-
 
     @Override
     public void onDestroyView() {

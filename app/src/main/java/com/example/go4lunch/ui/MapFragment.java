@@ -27,6 +27,8 @@ import com.example.go4lunch.databinding.MapFragmentBinding;
 import com.example.go4lunch.models.NearbySearchResult;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
 
+import com.example.go4lunch.tools.UrlRequest;
+import com.example.go4lunch.tools.VectorToBitmap;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -91,11 +93,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
    @Override
     public void onMapReady(@NonNull @NotNull GoogleMap gm) {
-       googleMap = gm;
-       getLocationPermission();
-       if(locationPermissionGranted){
-           getDeviceLocation();
-       }
+        googleMap = gm;
+        getLocationPermission();
     }
 
     private void getLocationPermission() {
@@ -120,6 +119,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
         try {
             if (locationPermissionGranted) {
+                getDeviceLocation();
                 googleMap.setMyLocationEnabled(true);
                 googleMap.getUiSettings().setMyLocationButtonEnabled(true);
             } else {
@@ -169,36 +169,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         //execute query
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            StringBuilder placesBuilder = new StringBuilder();
-            try {
-
-                URL requestUrl = new URL(url);
-                HttpURLConnection connection = (HttpURLConnection)requestUrl.openConnection();
-                connection.setRequestMethod("GET");
-                connection.connect();
-                int responseCode = connection.getResponseCode();
-
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    InputStream inputStream = connection.getInputStream();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                    if (inputStream != null) {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            placesBuilder.append(line).append("\n");
-                        }
-                    }
-                }
-                else {
-                    Log.i("test", "Unsuccessful HTTP Response Code: " + responseCode);
-                }
-            } catch (MalformedURLException e) {
-                Log.e("test", "Error processing Places API URL", e);
-            } catch (IOException e) {
-                Log.e("test", "Error connecting to Places API", e);
-            }
-            try {
-                //parse results to JSON + add each result to searchResultArrayList
-                    JSONObject resultObject = new JSONObject(placesBuilder.toString());
+            if(service.getNearbySearchResults().size() == 0) {
+                String urlRequestResult = UrlRequest.execute(url);
+                try {
+                    //parse results to JSON + add each result to searchResultArrayList
+                    JSONObject resultObject = new JSONObject(urlRequestResult);
                     JSONArray placesArray = resultObject.getJSONArray("results");
                     for (int i = 0; placesArray.length() > i; i++) {
                         NearbySearchResult nearbySearchResult = new NearbySearchResult();
@@ -207,10 +182,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                         String name = place.getString("name");
                         String address = place.getString("vicinity");
                         String place_id = place.getString("place_id");
-                        int rating = (int)Math.round((place.getDouble("rating")/5)*3);
+                        int rating = (int) Math.round((place.getDouble("rating") / 5) * 3);
 
                         JSONObject geometry = place.getJSONObject("geometry");
-                        JSONObject location = geometry.getJSONObject ("location");
+                        JSONObject location = geometry.getJSONObject("location");
                         Double lat = location.getDouble("lat");
                         Double lng = location.getDouble("lng");
 
@@ -218,7 +193,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                         boolean open_now = opening_hours.getBoolean("open_now");
 
                         JSONObject photos = new JSONObject(place.getJSONArray("photos").get(0).toString());
-                        String photoRef =  photos.getString("photo_reference");
+                        String photoRef = photos.getString("photo_reference");
 
                         float[] distanceBetweenArray = new float[1];
                         Location.distanceBetween(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude(), lat, lng, distanceBetweenArray);
@@ -236,9 +211,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                         service.addNearbySearchResult(nearbySearchResult);
                     }
 
-            }
-            catch (Exception e) {
-                e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         try {
@@ -257,18 +232,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private void addMarkerOption(LatLng position, String title){
         googleMap.addMarker(new MarkerOptions()
                 .position(position)
-                .title(title).icon(vectorToBitmap(R.drawable.ic_baseline_restaurant_24)));
-    }
-
-    private BitmapDescriptor vectorToBitmap(@DrawableRes int id) {
-        Drawable vectorDrawable = ResourcesCompat.getDrawable(getResources(), id, null);
-        Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(),
-                vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        vectorDrawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        DrawableCompat.setTint(vectorDrawable, Color.BLACK);
-        vectorDrawable.draw(canvas);
-        return BitmapDescriptorFactory.fromBitmap(bitmap);
+                .title(title).icon(VectorToBitmap.convert(getResources(), R.drawable.ic_baseline_restaurant_24)));
     }
 
     @Override
