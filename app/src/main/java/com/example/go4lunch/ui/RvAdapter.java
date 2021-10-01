@@ -1,9 +1,8 @@
 package com.example.go4lunch.ui;
 
-import static com.example.go4lunch.tools.PhotoRefToBitmap.getBitmap;
-
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
-import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,30 +10,35 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.go4lunch.DI.DI;
 import com.example.go4lunch.R;
-import com.example.go4lunch.databinding.SpotListCellBinding;
 import com.example.go4lunch.models.NearbySearchResult;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
 import com.example.go4lunch.tools.PhotoRefToBitmap;
-//VERIFIER LE CALCUL DES ETOILES CAR IL Y EN A TJS 3!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 public class RvAdapter extends RecyclerView.Adapter<RvAdapter.RvViewHolder> {
     private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
+    private Context context;
+    private static RecyclerViewClickListener itemListener;
+
+    public RvAdapter(Context context, RecyclerViewClickListener itemListener) {
+        this.context = context;
+        this.itemListener = itemListener;
+    }
 
     @NonNull
     @Override
     public RvViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        View view = inflater.inflate(R.layout.spot_list_cell, parent, false);
-        return new RvViewHolder(view);
+        View view = inflater.inflate(R.layout.fragment_spot_list_cell, parent, false);
+        return new RvViewHolder(view, itemListener);
     }
 
     @Override
     public void onBindViewHolder(@NonNull RvViewHolder holder, int position) {
-        holder.display(service.getNearbySearchResults().get(position));
+        holder.display(service.getNearbySearchResults().get(position), position);
     }
 
     @Override
@@ -53,8 +57,9 @@ public class RvAdapter extends RecyclerView.Adapter<RvAdapter.RvViewHolder> {
         private final TextView star1;
         private final TextView star2;
         private final TextView star3;
+        private int itemPosition;
 
-        public RvViewHolder(final View itemView) {
+        public RvViewHolder(final View itemView, RecyclerViewClickListener itemListener) {
             super(itemView);
             title = itemView.findViewById(R.id.cellTitle);
             address = itemView.findViewById(R.id.cellAddress);
@@ -67,18 +72,13 @@ public class RvAdapter extends RecyclerView.Adapter<RvAdapter.RvViewHolder> {
             star3 = itemView.findViewById(R.id.start3);
 
 
-            /*itemView.setOnClickListener(new View.OnClickListener() {
-
-                public void onClick(View view) {
-                    new AlertDialog.Builder(itemView.getContext())
-                            .setTitle(currentPair.first)
-                            .setMessage(currentPair.second)
-                            .show();
-                }
-            });*/
+            itemView.setOnClickListener(view -> {
+                itemListener.recyclerViewListClicked(itemPosition);
+            });
         }
 
-        public void display(NearbySearchResult nearbySearchResult) {
+        public void display(NearbySearchResult nearbySearchResult, int position) {
+            itemPosition = position;
             title.setText(nearbySearchResult.getName());
             address.setText(nearbySearchResult.getVicinity());
             hours.setText(nearbySearchResult.getOpen_now() ? "Open": "Closed");
@@ -108,6 +108,10 @@ public class RvAdapter extends RecyclerView.Adapter<RvAdapter.RvViewHolder> {
                          star1.setVisibility(View.INVISIBLE);
             }
         }
+    }
+
+    public interface RecyclerViewClickListener {
+        public void recyclerViewListClicked(int position);
     }
 
 }

@@ -23,7 +23,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.go4lunch.DI.DI;
 import com.example.go4lunch.R;
-import com.example.go4lunch.databinding.MapFragmentBinding;
+import com.example.go4lunch.databinding.FragmentMapBinding;
 import com.example.go4lunch.models.NearbySearchResult;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
 
@@ -37,8 +37,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
@@ -46,21 +44,13 @@ import com.google.android.gms.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
-    private MapFragmentBinding binding;
+    private FragmentMapBinding binding;
     private Boolean locationPermissionGranted;
     private Location lastKnownLocation;
     private FusedLocationProviderClient fusedLocationProviderClient;
@@ -71,7 +61,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        binding = MapFragmentBinding.inflate(inflater, container, false);
+        binding = FragmentMapBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
 
         locationPermissionGranted = false;
@@ -183,7 +173,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                         String address = place.getString("vicinity");
                         String place_id = place.getString("place_id");
                         int rating = (int) Math.round((place.getDouble("rating") / 5) * 3);
-
                         JSONObject geometry = place.getJSONObject("geometry");
                         JSONObject location = geometry.getJSONObject("location");
                         Double lat = location.getDouble("lat");

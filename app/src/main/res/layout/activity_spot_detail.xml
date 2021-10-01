@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/detailImage"
+        android:layout_width="match_parent"
+        android:layout_height="280dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/detailFloatingButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="20dp"
+        android:src="@drawable/ic_baseline_check_24"
+        android:layout_gravity="end|bottom"
+        app:layout_constraintBottom_toTopOf="@+id/descriptionLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/detailImage" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/descriptionLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/detailImage"
+        android:background="@color/green"
+       >
+
+        <TextView
+            android:id="@+id/detailName"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:text="Default name"
+            android:textColor="@color/white"
+            android:textSize="16dp"
+            android:layout_marginStart="10dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/descriptionLayout" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:id="@+id/startLayout"
+            android:layout_marginStart="20dp"
+            android:orientation="horizontal"
+            app:layout_constraintStart_toEndOf="@+id/detailName"
+            app:layout_constraintTop_toTopOf="@+id/descriptionLayout"
+            >
+
+            <TextView
+                android:id="@+id/start1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:drawableStartCompat="@drawable/ic_baseline_star_24" />
+
+            <TextView
+                android:id="@+id/start2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:drawableStartCompat="@drawable/ic_baseline_star_24" />
+
+            <TextView
+                android:id="@+id/start3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:drawableStartCompat="@drawable/ic_baseline_star_24" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/detailAddress"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginStart="10dp"
+            android:text="Default address"
+            android:textColor="@color/white"
+            android:textSize="12dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/detailName" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <LinearLayout
+        android:id="@+id/detailActions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginVertical="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/descriptionLayout">
+
+        <TextView
+            android:id="@+id/detailTextCall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/ic_baseline_phone_24"
+            android:text="CALL"
+            android:textAlignment="center" />
+
+        <TextView
+            android:id="@+id/detailTextLike"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/ic_baseline_star_like_24"
+            android:text="LIKE"
+            android:textAlignment="center" />
+
+        <TextView
+            android:id="@+id/detailWebsite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/ic_baseline_public_24"
+            android:text="WEBSITE"
+            android:textAlignment="center" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

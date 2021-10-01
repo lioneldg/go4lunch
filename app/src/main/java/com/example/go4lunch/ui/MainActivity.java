@@ -11,14 +11,22 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.SearchView;
+import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.ActivityMainBinding;
+import com.example.go4lunch.databinding.ProfileSumUpBinding;
+import com.example.go4lunch.ui.manager.UserManager;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
 import com.firebase.ui.auth.IdpResponse;
@@ -32,10 +40,8 @@ import com.google.firebase.auth.FirebaseUser;
 import java.util.Arrays;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity{
+public class MainActivity extends AppCompatActivity implements RvAdapter.RecyclerViewClickListener{
     private ActivityMainBinding binding;
-    private List<AuthUI.IdpConfig> providers;
-    private Intent signInIntent;
     private FragmentManager fm;
     private FragmentTransaction ft;
     private MapFragment mapFragment;
@@ -43,21 +49,30 @@ public class MainActivity extends AppCompatActivity{
     private WorkmatesFragment workmatesFragment;
     private SearchView searchView;
     private DrawerLayout drawer;
-
-    //connection
-    private final ActivityResultLauncher<Intent> signInLauncher = registerForActivityResult(
-            new FirebaseAuthUIActivityResultContract(),
-            result -> onSignInResult(result)
-    );
+    private UserManager userManager = UserManager.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        setSupportActionBar(binding.toolbar);
 
-        //drawer
+        fm = getSupportFragmentManager();
+        mapFragment = new MapFragment();
+        spotsFragment = new SpotsFragment(this);
+        workmatesFragment = new WorkmatesFragment();
+
+        //set search bar layout
+        setSupportActionBar(binding.toolbar);
+        //set drawer menu
+        setDrawer();
+        //set bottom bar
+        setNavigationListener();
+        userManager.signOut(getApplicationContext());
+        signIn();
+    }
+
+    private void setDrawer() {
         drawer = binding.drawer;
         ActionBarDrawerToggle drawerToggle =  new ActionBarDrawerToggle(this, drawer, R.string.open, R.string.close);
         drawer.addDrawerListener(drawerToggle);
@@ -66,7 +81,6 @@ public class MainActivity extends AppCompatActivity{
         MenuItem yourLunch = binding.navigationView.getMenu().findItem(R.id.your_lunch);
         MenuItem settings = binding.navigationView.getMenu().findItem(R.id.settings);
         MenuItem logout = binding.navigationView.getMenu().findItem(R.id.logout);
-
         yourLunch.setOnMenuItemClickListener(menuItem -> {
                     return false;
                 }
@@ -78,32 +92,13 @@ public class MainActivity extends AppCompatActivity{
         );
 
         logout.setOnMenuItemClickListener(menuItem -> {
-                signOut();
-                return false;
-            }
+                   userManager.signOut(getApplicationContext()).addOnSuccessListener(task -> Snackbar.make(binding.getRoot(), "DÉCONNECTÉ", Snackbar.LENGTH_SHORT).show());
+                    return false;
+                }
         );
-
-        //providers
-        providers = Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build(),new AuthUI.IdpConfig.GoogleBuilder().build(),new AuthUI.IdpConfig.FacebookBuilder().build(), new AuthUI.IdpConfig.TwitterBuilder().build());
-
-        //signIn intent
-        signInIntent = AuthUI.getInstance()
-                .createSignInIntentBuilder()
-                .setAvailableProviders(providers)
-                .build();
-
-        //lunch sign in
-        signInLauncher.launch(signInIntent);
-
-        mapFragment = new MapFragment();
-        spotsFragment = new SpotsFragment();
-        workmatesFragment = new WorkmatesFragment();
-
-        fm = getSupportFragmentManager();
-
-        this.setNavigationListener();
     }
 
+    //menu button listener: open/close drawer
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         drawer.openDrawer(GravityCompat.START);
@@ -131,14 +126,9 @@ public class MainActivity extends AppCompatActivity{
         return true;
     }
 
+    //bottomBar listener
     private void setNavigationListener(){
         binding.bottomBar.setOnItemSelectedListener(item -> bottomBarChangeView(item.getItemId()));
-    }
-
-    private void changeFragment(Fragment frag){
-        ft = fm.beginTransaction();
-        ft.replace(binding.mainFrameLayout.getId(),frag);
-        ft.commit();
     }
 
     private Boolean bottomBarChangeView(Integer integer){
@@ -161,24 +151,70 @@ public class MainActivity extends AppCompatActivity{
         return true;
     }
 
+    private void changeFragment(Fragment frag){
+        ft = fm.beginTransaction();
+        ft.replace(binding.mainFrameLayout.getId(),frag);
+        ft.commit();
+    }
+
+    private void signIn() {
+        registerForActivityResult(
+                new FirebaseAuthUIActivityResultContract(),
+                result -> onSignInResult(result)
+        ).launch(userManager.signInIntent());
+    }
+
     private void onSignInResult(FirebaseAuthUIAuthenticationResult result) {
         IdpResponse response = result.getIdpResponse();
         if (result.getResultCode() == RESULT_OK) {
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             Snackbar.make(binding.getRoot(), "CONNECTÉ", Snackbar.LENGTH_SHORT).show();
             changeFragment(mapFragment);
+            updateUIWithUserData(user);
         } else {
             Snackbar.make(binding.getRoot(), "NON CONNECTÉ", Snackbar.LENGTH_SHORT).show();
         }
     }
 
-    //LOGOUT
-    private void signOut(){
-        AuthUI.getInstance().signOut(this).addOnCompleteListener(new OnCompleteListener<Void>() {
-                    public void onComplete(@NonNull Task<Void> task) {
-                        Snackbar.make(binding.getRoot(), "DÉCONNECTÉ", Snackbar.LENGTH_SHORT).show();
-                    }
-                });
-        signInLauncher.launch(signInIntent);
+    private void setProfilePicture(Uri profilePictureUrl){
+        Glide.with(this)
+                .load(profilePictureUrl)
+                .apply(RequestOptions.circleCropTransform())
+                .into((ImageView) binding.navigationView.getHeaderView(0).findViewById(R.id.profilePicture));
+    }
+
+    private void updateUIWithUserData(FirebaseUser user){
+        if(userManager.isCurrentUserLogged()){
+            if(user.getPhotoUrl() != null){
+                setProfilePicture(user.getPhotoUrl());
+            }
+            setTextUserData(user);
+        }
+    }
+
+    private void setTextUserData(FirebaseUser user){
+
+        //Get email & username from User
+        String email = TextUtils.isEmpty(user.getEmail()) ? "No mail found" : user.getEmail();
+        String username = TextUtils.isEmpty(user.getDisplayName()) ? "No username found" : user.getDisplayName();
+
+        //Update views with data
+        TextView title = binding.navigationView.getHeaderView(0).findViewById(R.id.firstAndLastName);
+        title.setText(username);
+
+        TextView emailTV = binding.navigationView.getHeaderView(0).findViewById(R.id.email);
+        emailTV.setText(email);
+    }
+
+
+
+
+
+
+    @Override
+    public void recyclerViewListClicked(int position) {
+        Intent detailIntent = new Intent(MainActivity.this, SpotDetailActivity.class);
+        detailIntent.putExtra("spotId", position);
+        startActivity(detailIntent);
     }
 }

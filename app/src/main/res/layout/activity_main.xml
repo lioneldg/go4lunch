@@ -1,19 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout android:id="@+id/drawer"
+<androidx.drawerlayout.widget.DrawerLayout
+    android:id="@+id/drawer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.MainActivity"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/navigation_view"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:clipToPadding="false"
-        app:menu="@menu/drawer_menu" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -47,5 +40,14 @@
             app:itemTextColor="@drawable/bottom_navigation_colors"
             app:menu="@menu/bottom_bar" />
     </LinearLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navigation_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:clipToPadding="false"
+        app:headerLayout="@layout/profile_sum_up"
+        app:menu="@menu/drawer_menu"/>
 
 </androidx.drawerlayout.widget.DrawerLayout>
