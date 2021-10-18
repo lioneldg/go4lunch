@@ -25,9 +25,13 @@ public class SpotsFragment extends Fragment {
 
         rv = binding.list;
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
-        rv.setAdapter(new RvAdapter(getContext(), mainActivity));
-
         return binding.getRoot();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        rv.setAdapter(new RestaurantsListAdapter(getContext(), mainActivity));
     }
 
     @Override

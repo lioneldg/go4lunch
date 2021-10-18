@@ -2,7 +2,6 @@ package com.example.go4lunch.ui.manager;
 
 import android.content.Context;
 import android.content.Intent;
-import android.view.View;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -56,8 +55,10 @@ public class UserManager extends ViewModel {
         return userRepository.deleteUser(context);
     }
 
-    public void addWorkmate(String restId) { userRepository.addWorkmate(restId); }
+    public void addWorkmate(String restId, String name) { userRepository.addWorkmate(restId, name); }
 
-    public MutableLiveData<ArrayList<User>> getWorkmatesList(String restId) { return userRepository.getWorkmatesList(restId); }
+    public MutableLiveData<ArrayList<User>> getWorkmatesList(String restId, String restName) { return userRepository.getWorkmatesList(restId, restName); }
+
+    public MutableLiveData<String[]> getWorkmatesListEveryWhere() { return userRepository.getWorkmatesListEveryWhere(); }
 
 }

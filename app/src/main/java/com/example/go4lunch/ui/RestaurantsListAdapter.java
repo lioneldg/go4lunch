@@ -1,7 +1,6 @@
 package com.example.go4lunch.ui;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,20 +9,26 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.go4lunch.DI.DI;
 import com.example.go4lunch.R;
 import com.example.go4lunch.models.NearbySearchResult;
+import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
 import com.example.go4lunch.tools.PhotoRefToBitmap;
+import com.example.go4lunch.ui.manager.UserManager;
 
-public class RvAdapter extends RecyclerView.Adapter<RvAdapter.RvViewHolder> {
+import java.util.ArrayList;
+
+public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsListAdapter.RvViewHolder> {
     private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
     private Context context;
     private static RecyclerViewClickListener itemListener;
 
-    public RvAdapter(Context context, RecyclerViewClickListener itemListener) {
+    public RestaurantsListAdapter(Context context, RecyclerViewClickListener itemListener) {
         this.context = context;
         this.itemListener = itemListener;
     }
@@ -38,7 +43,7 @@ public class RvAdapter extends RecyclerView.Adapter<RvAdapter.RvViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull RvViewHolder holder, int position) {
-        holder.display(service.getNearbySearchResults().get(position), position);
+        holder.display(service.getNearbySearchResults().get(position), position, context);
     }
 
     @Override
@@ -58,6 +63,7 @@ public class RvAdapter extends RecyclerView.Adapter<RvAdapter.RvViewHolder> {
         private final TextView star2;
         private final TextView star3;
         private int itemPosition;
+        private UserManager userManager = UserManager.getInstance();
 
         public RvViewHolder(final View itemView, RecyclerViewClickListener itemListener) {
             super(itemView);
@@ -67,9 +73,9 @@ public class RvAdapter extends RecyclerView.Adapter<RvAdapter.RvViewHolder> {
             distance = itemView.findViewById(R.id.cellDistance);
             workmatesNumber = itemView.findViewById(R.id.cellWorkmatesNumber);
             image = itemView.findViewById(R.id.cellImage);
-            star1 = itemView.findViewById(R.id.start1);
-            star2 = itemView.findViewById(R.id.start2);
-            star3 = itemView.findViewById(R.id.start3);
+            star1 = itemView.findViewById(R.id.star1);
+            star2 = itemView.findViewById(R.id.star2);
+            star3 = itemView.findViewById(R.id.star3);
 
 
             itemView.setOnClickListener(view -> {
@@ -77,13 +83,18 @@ public class RvAdapter extends RecyclerView.Adapter<RvAdapter.RvViewHolder> {
             });
         }
 
-        public void display(NearbySearchResult nearbySearchResult, int position) {
+        public void display(NearbySearchResult nearbySearchResult, int position, Context context) {
+            //workmateList observer
+            final Observer<ArrayList<User>> workmateListObserver = workmateList -> {
+                workmatesNumber.setText("("+workmateList.size()+")");
+            };
+            userManager.getWorkmatesList(nearbySearchResult.getPlace_id(), nearbySearchResult.getName()).observe((LifecycleOwner) context, workmateListObserver);
+
             itemPosition = position;
             title.setText(nearbySearchResult.getName());
             address.setText(nearbySearchResult.getVicinity());
             hours.setText(nearbySearchResult.getOpen_now() ? "Open": "Closed");
             distance.setText(nearbySearchResult.getDistanceBetween()+" m");
-            workmatesNumber.setText("(3)");
             Bitmap photo = PhotoRefToBitmap.getBitmap(nearbySearchResult.getPhoto_reference(), 200);
             image.setImageBitmap(photo);
             int starNumber = nearbySearchResult.getRating();

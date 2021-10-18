@@ -55,19 +55,19 @@
             >
 
             <TextView
-                android:id="@+id/start1"
+                android:id="@+id/star1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:drawableStartCompat="@drawable/ic_baseline_star_24" />
 
             <TextView
-                android:id="@+id/start2"
+                android:id="@+id/star2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:drawableStartCompat="@drawable/ic_baseline_star_24" />
 
             <TextView
-                android:id="@+id/start3"
+                android:id="@+id/star3"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:drawableStartCompat="@drawable/ic_baseline_star_24" />
@@ -123,5 +123,23 @@
             android:text="WEBSITE"
             android:textAlignment="center" />
     </LinearLayout>
+
+    <View
+        android:id="@+id/separator"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E4D9D9"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/detailActions" />
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/separator" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

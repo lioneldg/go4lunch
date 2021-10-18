@@ -1,14 +1,14 @@
 package com.example.go4lunch.models;
 
 public class NearbySearchResult {
-    private String name;
-    private String place_id;
+    private String name = "";
+    private String place_id = "";
     private double lat;
     private double lng;
     private boolean open_now;
-    private String photo_reference;
+    private String photo_reference = "";
     private int rating;
-    private String vicinity;
+    private String vicinity = "";
     private int distanceBetween;
     private String website = " ";
     private String phone = " ";

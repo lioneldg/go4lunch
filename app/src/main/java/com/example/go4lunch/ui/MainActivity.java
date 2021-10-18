@@ -1,6 +1,5 @@
 package com.example.go4lunch.ui;
 
-import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,22 +24,15 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.ActivityMainBinding;
-import com.example.go4lunch.databinding.ProfileSumUpBinding;
 import com.example.go4lunch.ui.manager.UserManager;
-import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
 import com.firebase.ui.auth.IdpResponse;
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import java.util.Arrays;
-import java.util.List;
-
-public class MainActivity extends AppCompatActivity implements RvAdapter.RecyclerViewClickListener{
+public class MainActivity extends AppCompatActivity implements RestaurantsListAdapter.RecyclerViewClickListener, WorkmateListAdapter.RecyclerViewClickListener{
     private ActivityMainBinding binding;
     private FragmentManager fm;
     private FragmentTransaction ft;
@@ -60,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements RvAdapter.Recycle
         fm = getSupportFragmentManager();
         mapFragment = new MapFragment();
         spotsFragment = new SpotsFragment(this);
-        workmatesFragment = new WorkmatesFragment();
+        workmatesFragment = new WorkmatesFragment(this);
 
         //set search bar layout
         setSupportActionBar(binding.toolbar);
@@ -206,15 +198,17 @@ public class MainActivity extends AppCompatActivity implements RvAdapter.Recycle
         emailTV.setText(email);
     }
 
-
-
-
-
-
     @Override
     public void recyclerViewListClicked(int position) {
         Intent detailIntent = new Intent(MainActivity.this, SpotDetailActivity.class);
-        detailIntent.putExtra("spotId", position);
+        detailIntent.putExtra("rvPosition", position);
+        startActivity(detailIntent);
+    }
+
+    @Override
+    public void recyclerViewListClicked(String spotId) {
+        Intent detailIntent = new Intent(MainActivity.this, SpotDetailActivity.class);
+        detailIntent.putExtra("spotId", spotId);
         startActivity(detailIntent);
     }
 }

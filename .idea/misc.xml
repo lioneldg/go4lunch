@@ -8,10 +8,15 @@
         <entry key="app/src/main/res/drawable/ic_baseline_public_24.xml" value="0.5588541666666667" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.5" />
         <entry key="app/src/main/res/layout/activity_spot_detail.xml" value="0.5458333333333333" />
+        <entry key="app/src/main/res/layout/fragment_spot_list_cell.xml" value="0.384963768115942" />
+        <entry key="app/src/main/res/layout/fragment_spots.xml" value="0.5458333333333333" />
+        <entry key="app/src/main/res/layout/fragment_workmates.xml" value="0.384963768115942" />
+        <entry key="app/src/main/res/layout/fragment_wormates_list_cell.xml" value="0.384963768115942" />
         <entry key="app/src/main/res/layout/profile_sum_up.xml" value="0.5427083333333333" />
         <entry key="app/src/main/res/layout/spot_detail_fragment.xml" value="0.5427083333333333" />
         <entry key="app/src/main/res/layout/spot_list_cell.xml" value="0.33" />
         <entry key="app/src/main/res/layout/spots_fragment.xml" value="0.325" />
+        <entry key="app/src/main/res/layout/workmate_list_cell.xml" value="0.5458333333333333" />
         <entry key="app/src/main/res/menu/drawer_menu.xml" value="0.5427083333333333" />
       </map>
     </option>
