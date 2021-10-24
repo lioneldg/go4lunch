@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.go4lunch.DI.DI;
 import com.example.go4lunch.databinding.ActivitySpotDetailBinding;
+import com.example.go4lunch.models.DetailSearchResult;
 import com.example.go4lunch.models.NearbySearchResult;
 import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
@@ -34,7 +35,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SpotDetailActivity extends AppCompatActivity {
     private ActivitySpotDetailBinding binding;
     private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
-    private NearbySearchResult nearbySearchResult;
     private Bitmap photo;
     private ImageView image;
     private TextView name;
@@ -45,7 +45,7 @@ public class SpotDetailActivity extends AppCompatActivity {
     private FloatingActionButton fab;
     private RecyclerView recyclerView;
     private UserManager userManager = UserManager.getInstance();
-    private String spotId;
+    private DetailSearchResult detailSearchResult;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -63,87 +63,29 @@ public class SpotDetailActivity extends AppCompatActivity {
         recyclerView = binding.list;
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        detailSearchResult = service.getDetailSearchResult();
 
-        int rvPosition = getIntent().getIntExtra("rvPosition", -1);
-        spotId = getIntent().getStringExtra("spotId");
+        photo = PhotoRefToBitmap.getBitmap(detailSearchResult.getPhoto_reference(), 800);
 
-        if(rvPosition == -1) {
-            nearbySearchResult = new NearbySearchResult();
-            String url = "https://maps.googleapis.com/maps/api/place/details/json?place_id=" + spotId + "&fields=name%2Crating%2Cformatted_phone_number%2Cphoto%2Cvicinity%2Cwebsite&key=" + MAPS_API_KEY;
-            placeSearchExecutor(url);
-        } else {
-            nearbySearchResult = service.getNearbySearchResults().get(rvPosition);
-            String url = "https://maps.googleapis.com/maps/api/place/details/json?place_id=" + nearbySearchResult.getPlace_id() + "&fields=name%2Crating%2Cformatted_phone_number%2Cphoto%2Cvicinity%2Cwebsite&key=" + MAPS_API_KEY;
-            placeSearchExecutor(url);
-            photo = PhotoRefToBitmap.getBitmap(nearbySearchResult.getPhoto_reference(), 800);
-
-            image.setImageBitmap(photo);
-            name.setText(nearbySearchResult.getName());
-            address.setText(nearbySearchResult.getVicinity());
+        image.setImageBitmap(photo);
+        name.setText(detailSearchResult.getName());
+        address.setText(detailSearchResult.getVicinity());
 
             //workmateList observer
-            final Observer<ArrayList<User>> workmateListObserver = workmateList -> {
-                recyclerView.setAdapter(new WorkmateListAdapter(workmateList, getApplicationContext(), false));
-            };
-            userManager.getWorkmatesList(nearbySearchResult.getPlace_id(), nearbySearchResult.getName()).observe(this, workmateListObserver);
+        final Observer<ArrayList<User>> workmateListObserver = workmateList -> {
+            recyclerView.setAdapter(new WorkmateListAdapter(workmateList, getApplicationContext(), false));
+        };
+        userManager.getWorkmatesList(detailSearchResult.getPlace_id(), detailSearchResult.getName()).observe(this, workmateListObserver);
 
-            fab.setOnClickListener(view -> {
-                userManager.addWorkmate(nearbySearchResult.getPlace_id(), nearbySearchResult.getName());
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                userManager.getWorkmatesList(nearbySearchResult.getPlace_id(), nearbySearchResult.getName()).observe(this, workmateListObserver);
-            });
-        }
-    }
-//TODO sortir l'executor de là pour faire la requette avant d'afficher la vue. Faire la requette deans le main dans l'interface
-    //voir si on peut mettre ca dans l'api service et model
-    private void placeSearchExecutor(String url){
-        //execute query
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            String urlRequestResult = UrlRequest.execute(url);
-            JSONObject result = null;
+        fab.setOnClickListener(view -> {
+            userManager.addWorkmate(detailSearchResult.getPlace_id(), detailSearchResult.getName());
             try {
-                //parse results to JSON + add result to searchResult
-                JSONObject resultObject = new JSONObject(urlRequestResult);
-                result = resultObject.getJSONObject("result");
-            } catch (Exception e) {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            if(nearbySearchResult.getPhone().equals(" ") && nearbySearchResult.getWebsite().equals(" ")) {
-                try {
-                    String phone = result.getString("formatted_phone_number");
-                    nearbySearchResult.setPhone(phone);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                try {
-                    String website = result.getString("website");
-                    nearbySearchResult.setWebsite(website);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            try {
-                String _photoRef = result.getJSONArray("photos").getJSONObject(0).getString("photo_reference");
-                String _name = result.getString("name");
-                String _vicinity = result.getString("vicinity");
-                double _rating = result.getDouble("rating");
-                Bitmap _photo = PhotoRefToBitmap.getBitmap(_photoRef, 800);
-                this.setUI(_name, _vicinity, _rating, _photo);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            userManager.getWorkmatesList(detailSearchResult.getPlace_id(), detailSearchResult.getName()).observe(this, workmateListObserver);
         });
-        try {
-            executor.shutdown();
-            executor.awaitTermination(1, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     private void setUI(String _name, String _vicinity, double _rating, Bitmap _photo){
@@ -175,16 +117,16 @@ public class SpotDetailActivity extends AppCompatActivity {
         final Observer<ArrayList<User>> workmateListObserver = workmateList -> {
             recyclerView.setAdapter(new WorkmateListAdapter(workmateList, getApplicationContext(), false));
         };
-        userManager.getWorkmatesList(spotId, _name).observe(this, workmateListObserver);
+        userManager.getWorkmatesList(detailSearchResult.getPlace_id(), _name).observe(this, workmateListObserver);
 
         fab.setOnClickListener(view -> {
-            userManager.addWorkmate(spotId, _name);
+            userManager.addWorkmate(detailSearchResult.getPlace_id(), _name);
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            userManager.getWorkmatesList(spotId, _name).observe(this, workmateListObserver);
+            userManager.getWorkmatesList(detailSearchResult.getPlace_id(), _name).observe(this, workmateListObserver);
         });
     }
 }

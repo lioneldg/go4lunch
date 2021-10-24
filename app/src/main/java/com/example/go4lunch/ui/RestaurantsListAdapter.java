@@ -63,6 +63,7 @@ public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsList
         private final TextView star2;
         private final TextView star3;
         private int itemPosition;
+        private String placeId;
         private UserManager userManager = UserManager.getInstance();
 
         public RvViewHolder(final View itemView, RecyclerViewClickListener itemListener) {
@@ -79,16 +80,17 @@ public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsList
 
 
             itemView.setOnClickListener(view -> {
-                itemListener.recyclerViewListClicked(itemPosition);
+                itemListener.recyclerViewListClicked(placeId);
             });
         }
 
         public void display(NearbySearchResult nearbySearchResult, int position, Context context) {
+            placeId = nearbySearchResult.getPlace_id();
             //workmateList observer
             final Observer<ArrayList<User>> workmateListObserver = workmateList -> {
                 workmatesNumber.setText("("+workmateList.size()+")");
             };
-            userManager.getWorkmatesList(nearbySearchResult.getPlace_id(), nearbySearchResult.getName()).observe((LifecycleOwner) context, workmateListObserver);
+            userManager.getWorkmatesList(placeId, nearbySearchResult.getName()).observe((LifecycleOwner) context, workmateListObserver);
 
             itemPosition = position;
             title.setText(nearbySearchResult.getName());
@@ -122,7 +124,7 @@ public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsList
     }
 
     public interface RecyclerViewClickListener {
-        public void recyclerViewListClicked(int position);
+        public void recyclerViewListClicked(String place_id);
     }
 
 }

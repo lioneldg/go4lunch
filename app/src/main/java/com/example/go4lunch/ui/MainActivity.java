@@ -1,5 +1,7 @@
 package com.example.go4lunch.ui;
 
+import static com.example.go4lunch.BuildConfig.MAPS_API_KEY;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -10,6 +12,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -22,8 +25,13 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.example.go4lunch.DI.DI;
 import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.ActivityMainBinding;
+import com.example.go4lunch.models.DetailSearchResult;
+import com.example.go4lunch.service.InterfaceSearchResultApiService;
+import com.example.go4lunch.tools.PhotoRefToBitmap;
+import com.example.go4lunch.tools.UrlRequest;
 import com.example.go4lunch.ui.manager.UserManager;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
 import com.firebase.ui.auth.IdpResponse;
@@ -31,6 +39,12 @@ import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import org.json.JSONObject;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements RestaurantsListAdapter.RecyclerViewClickListener, WorkmateListAdapter.RecyclerViewClickListener{
     private ActivityMainBinding binding;
@@ -42,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
     private SearchView searchView;
     private DrawerLayout drawer;
     private UserManager userManager = UserManager.getInstance();
+    private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -199,16 +214,45 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
     }
 
     @Override
-    public void recyclerViewListClicked(int position) {
-        Intent detailIntent = new Intent(MainActivity.this, SpotDetailActivity.class);
-        detailIntent.putExtra("rvPosition", position);
-        startActivity(detailIntent);
+    public void recyclerViewListClicked(String spotId) {
+        placeSearchExecutor(spotId);
+
     }
 
-    @Override
-    public void recyclerViewListClicked(String spotId) {
-        Intent detailIntent = new Intent(MainActivity.this, SpotDetailActivity.class);
-        detailIntent.putExtra("spotId", spotId);
-        startActivity(detailIntent);
+    private void placeSearchExecutor(String spotId){
+        String url = "https://maps.googleapis.com/maps/api/place/details/json?place_id=" + spotId + "&fields=name%2Crating%2Cformatted_phone_number%2Cphoto%2Cvicinity%2Cwebsite&key=" + MAPS_API_KEY;
+        //execute query
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            String urlRequestResult = UrlRequest.execute(url);
+            JSONObject result = null;
+            try {
+                //parse results to JSON + add result to searchResult
+                JSONObject resultObject = new JSONObject(urlRequestResult);
+                result = resultObject.getJSONObject("result");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            try {
+                String _phone = result.getString("formatted_phone_number");
+                String _website = result.getString("website");
+                String _photoRef = result.getJSONArray("photos").getJSONObject(0).getString("photo_reference");
+                String _name = result.getString("name");
+                String _vicinity = result.getString("vicinity");
+                double _rating = result.getDouble("rating");
+                service.setDetailSearchResult(new DetailSearchResult(spotId, _name, _photoRef, _rating, _vicinity, _website, _phone));
+                Intent detailIntent = new Intent(MainActivity.this, SpotDetailActivity.class);
+                startActivity(detailIntent);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        try {
+            executor.shutdown();
+            executor.awaitTermination(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
