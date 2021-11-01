@@ -10,7 +10,9 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 
+import com.example.go4lunch.DI.DI;
 import com.example.go4lunch.models.User;
+import com.example.go4lunch.service.InterfaceSearchResultApiService;
 import com.example.go4lunch.ui.WorkmateListAdapter;
 import com.example.go4lunch.ui.WorkmatesFragment;
 import com.firebase.ui.auth.AuthUI;
@@ -34,6 +36,7 @@ import java.util.Objects;
 
 public final class UserRepository {
 
+    private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
     private static volatile UserRepository instance;
 
     private UserRepository() { }
@@ -41,6 +44,9 @@ public final class UserRepository {
     // Get the Collection Reference
     private CollectionReference getRestaurantsCollection(){
         return FirebaseFirestore.getInstance().collection("restaurants");
+    }
+    private CollectionReference getUsersCollection(){
+        return FirebaseFirestore.getInstance().collection("users");
     }
 
     public static UserRepository getInstance() {
@@ -93,21 +99,39 @@ public final class UserRepository {
 
     public void addWorkmate(String restId, String restaurantName) {
         User userToCreate = createWorkmate(restId, restaurantName);
-        Task<DocumentSnapshot> restaurantData = getRestaurantData(restId);
-        restaurantData.addOnSuccessListener(documentSnapshot -> {
-            Map<String, Object> restaurant = new HashMap<>();
-            restaurant.put("id", restId);
-            restaurant.put("name", restaurantName);
-            this.getRestaurantsCollection().document(restId).set(restaurant);
-        }).addOnSuccessListener(documentSnapshot -> {
-            this.getRestaurantsCollection().document(restId).collection("workmates").document(userToCreate.getUid()).set(userToCreate);
-        });
+        Map<String, Object> restaurant = new HashMap<>();
+        restaurant.put("id", restId);
+        restaurant.put("name", restaurantName);
+        this.getRestaurantsCollection().document(restId).set(restaurant);
+        this.getRestaurantsCollection().document(restId).collection("workmates").document(userToCreate.getUid()).set(userToCreate);
+        Map<String, Object>user = new HashMap<>();
+        user.put("rest_id", restId);
+        user.put("user_id", userToCreate.getUid());
+        user.put("rest_name", restaurantName);
+        user.put("user_name", userToCreate.getUsername());
+        user.put("url_picture", userToCreate.getUrlPicture());
+        this.getUsersCollection().document(userToCreate.getUid()).set(user);
+    }
+
+    public void delWorkmate(String restId) {
+        this.getRestaurantsCollection().document(restId).collection("workmates").document(getCurrentUser().getUid()).delete();
+        this.getUsersCollection().document(getCurrentUser().getUid()).update("rest_id", "");
+        this.getUsersCollection().document(getCurrentUser().getUid()).update("rest_name", "");
     }
 
     // Get restaurant Data from Firestore
     private Task<DocumentSnapshot> getRestaurantData(String restId){
         if(restId != null){
             return this.getRestaurantsCollection().document(restId).get();
+        }else{
+            return null;
+        }
+    }
+
+    // Get restaurant Data from Firestore
+    private Task<DocumentSnapshot> getUserData(String userId){
+        if(userId != null){
+            return this.getUsersCollection().document(userId).get();
         }else{
             return null;
         }
@@ -136,12 +160,15 @@ public final class UserRepository {
     // Get workmates in restaurant
     public MutableLiveData<String[]> getWorkmatesListEveryWhere(){
         MutableLiveData<String[]> mutableLiveDataWorkmateList = new MutableLiveData();
-        this.getRestaurantsCollection().get().addOnSuccessListener(restaurantsListSnapshots -> {
-            List<DocumentSnapshot> queryDocumentSnapshots = restaurantsListSnapshots.getDocuments();
-            for (DocumentSnapshot restaurants: queryDocumentSnapshots) {
-                String restId =  Objects.requireNonNull(restaurants.get("id")).toString();
-                String restName =  Objects.requireNonNull(restaurants.get("name")).toString();
-                mutableLiveDataWorkmateList.setValue(new String[]{restId, restName});
+        this.getUsersCollection().get().addOnSuccessListener(usersListSnapshots -> {
+            List<DocumentSnapshot> queryDocumentSnapshots = usersListSnapshots.getDocuments();
+            for (DocumentSnapshot users: queryDocumentSnapshots) {
+                String restId =  Objects.requireNonNull(users.get("rest_id")).toString();
+                String restName =  Objects.requireNonNull(users.get("rest_name")).toString();
+                String userId = Objects.requireNonNull(users.get("user_id")).toString();
+                String userName = Objects.requireNonNull(users.get("user_name")).toString();
+                String urlPicture = Objects.requireNonNull(users.get("url_picture")).toString();
+                mutableLiveDataWorkmateList.setValue(new String[]{restId, restName, userId, userName, urlPicture});
             }
         });
         return mutableLiveDataWorkmateList;

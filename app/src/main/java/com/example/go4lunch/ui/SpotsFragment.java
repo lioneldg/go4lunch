@@ -16,7 +16,6 @@ public class SpotsFragment extends Fragment {
 
     public SpotsFragment(MainActivity ma) {
         mainActivity = ma;
-
     }
 
 

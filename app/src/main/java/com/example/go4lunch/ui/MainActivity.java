@@ -10,6 +10,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -29,6 +30,7 @@ import com.example.go4lunch.DI.DI;
 import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.ActivityMainBinding;
 import com.example.go4lunch.models.DetailSearchResult;
+import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
 import com.example.go4lunch.tools.PhotoRefToBitmap;
 import com.example.go4lunch.tools.UrlRequest;
@@ -42,6 +44,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -77,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         setNavigationListener();
         userManager.signOut(getApplicationContext());
         signIn();
+        setAllWorkmates();
     }
 
     private void setDrawer() {
@@ -254,5 +258,21 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setAllWorkmates(){
+        service.clearWorkmatesList();
+        final Observer<String[]> workmateListEveryWhereObserver = workmateListObserved -> {
+            String restId = workmateListObserved[0];
+            String restName = workmateListObserved[1];
+            String userId = workmateListObserved[2];
+            String userName = workmateListObserved[3];
+            String urlPicture = workmateListObserved[4];
+            if(!userId.equals("")) {
+                service.addWorkmatesList(new User(userId, userName, urlPicture, restName, restId));
+            }
+        };
+
+        userManager.getWorkmatesListEveryWhere().observe(this, workmateListEveryWhereObserver);
     }
 }

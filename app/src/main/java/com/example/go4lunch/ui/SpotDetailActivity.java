@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.go4lunch.DI.DI;
+import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.ActivitySpotDetailBinding;
 import com.example.go4lunch.models.DetailSearchResult;
 import com.example.go4lunch.models.NearbySearchResult;
@@ -46,6 +47,7 @@ public class SpotDetailActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private UserManager userManager = UserManager.getInstance();
     private DetailSearchResult detailSearchResult;
+    boolean hasDecided = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -71,28 +73,7 @@ public class SpotDetailActivity extends AppCompatActivity {
         name.setText(detailSearchResult.getName());
         address.setText(detailSearchResult.getVicinity());
 
-            //workmateList observer
-        final Observer<ArrayList<User>> workmateListObserver = workmateList -> {
-            recyclerView.setAdapter(new WorkmateListAdapter(workmateList, getApplicationContext(), false));
-        };
-        userManager.getWorkmatesList(detailSearchResult.getPlace_id(), detailSearchResult.getName()).observe(this, workmateListObserver);
-
-        fab.setOnClickListener(view -> {
-            userManager.addWorkmate(detailSearchResult.getPlace_id(), detailSearchResult.getName());
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            userManager.getWorkmatesList(detailSearchResult.getPlace_id(), detailSearchResult.getName()).observe(this, workmateListObserver);
-        });
-    }
-
-    private void setUI(String _name, String _vicinity, double _rating, Bitmap _photo){
-        image.setImageBitmap(_photo);
-        name.setText(_name);
-        address.setText(_vicinity);
-        int rating = (int) Math.round((_rating / 5) * 3);
+        int rating = (int) Math.round((detailSearchResult.getRating() / 5) * 3);
         switch(rating){
             case 3: star3.setVisibility(View.VISIBLE);
                 star1.setVisibility(View.VISIBLE);
@@ -115,18 +96,53 @@ public class SpotDetailActivity extends AppCompatActivity {
         }
         //workmateList observer
         final Observer<ArrayList<User>> workmateListObserver = workmateList -> {
+            for (int i = 0; i < workmateList.size(); i++) {
+                if(workmateList.get(i).getUid().equals(userManager.getCurrentUser().getUid())){
+                    hasDecided = true;
+                }
+            }
+            fab.setImageResource(hasDecided ? R.drawable.ic_baseline_clear_24 : R.drawable.ic_baseline_check_24);
             recyclerView.setAdapter(new WorkmateListAdapter(workmateList, getApplicationContext(), false));
         };
-        userManager.getWorkmatesList(detailSearchResult.getPlace_id(), _name).observe(this, workmateListObserver);
+        userManager.getWorkmatesList(detailSearchResult.getPlace_id(), detailSearchResult.getName()).observe(this, workmateListObserver);
 
         fab.setOnClickListener(view -> {
-            userManager.addWorkmate(detailSearchResult.getPlace_id(), _name);
+            ArrayList<User> workmates = service.getWorkmatesList();
+            if(hasDecided){
+                userManager.delWorkmate(detailSearchResult.getPlace_id());
+                for (int i = 0; i < workmates.size(); i++) {
+                    if(workmates.get(i).getUid().equals(userManager.getCurrentUser().getUid())){
+                        //update myself in Array at service
+                        workmates.get(i).setRestaurantId("");
+                        workmates.get(i).setRestaurantName("");
+                        break;
+                    }
+                }
+                fab.setImageResource(R.drawable.ic_baseline_check_24);
+                hasDecided=false;
+            }else {
+                for (int i = 0; i < workmates.size(); i++) {
+                    //remove myself from the other restaurant if restaurant Id == an other restaurant
+                    boolean isMe = workmates.get(i).getUid().equals(userManager.getCurrentUser().getUid());
+                    String myLastRestId = workmates.get(i).getRestaurantId();
+                    if(isMe && !myLastRestId.equals("") && !myLastRestId.equals(detailSearchResult.getPlace_id())){
+                        userManager.delWorkmate(myLastRestId);
+                        //update myself in Array at service
+                        workmates.get(i).setRestaurantId(detailSearchResult.getPlace_id());
+                        workmates.get(i).setRestaurantName(detailSearchResult.getName());
+                        break;
+                    }
+                }
+                userManager.addWorkmate(detailSearchResult.getPlace_id(), detailSearchResult.getName());
+                fab.setImageResource(R.drawable.ic_baseline_clear_24);
+                hasDecided=true;
+            }
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            userManager.getWorkmatesList(detailSearchResult.getPlace_id(), _name).observe(this, workmateListObserver);
+            userManager.getWorkmatesList(detailSearchResult.getPlace_id(), detailSearchResult.getName()).observe(this, workmateListObserver);
         });
     }
 }

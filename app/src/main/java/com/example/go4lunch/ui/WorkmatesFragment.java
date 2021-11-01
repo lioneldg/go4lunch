@@ -10,8 +10,10 @@ import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.go4lunch.DI.DI;
 import com.example.go4lunch.databinding.FragmentWorkmatesBinding;
 import com.example.go4lunch.models.User;
+import com.example.go4lunch.service.InterfaceSearchResultApiService;
 import com.example.go4lunch.ui.manager.UserManager;
 
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ public class WorkmatesFragment extends Fragment {
     private UserManager userManager = UserManager.getInstance();
     private RecyclerView rv;
     private MainActivity mainActivity;
+    private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
 
     public WorkmatesFragment(MainActivity ma) {
         mainActivity = ma;
@@ -31,27 +34,14 @@ public class WorkmatesFragment extends Fragment {
         rv = binding.list;
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         View view = binding.getRoot();
-
-        ArrayList<User> workmateList = new ArrayList<>();
-
-        final Observer<ArrayList<User>> workmateListObserver = workmateListObserved -> {
-            String uid = workmateListObserved.get(0).getUid();
-            String urlPicture = workmateListObserved.get(0).getUrlPicture();
-            String userName = workmateListObserved.get(0).getUsername();
-            String restaurantName = workmateListObserved.get(0).getRestaurantName();
-            String restaurantId = workmateListObserved.get(0).getRestaurantId();
-            workmateList.add(new User(uid, userName, urlPicture, restaurantName, restaurantId));
-            rv.setAdapter(new WorkmateListAdapter(workmateList, getContext(), true, mainActivity));
-        };
-
-        final Observer<String[]> workmateListEveryWhereObserver = workmateListObserved -> {
-            String restId = workmateListObserved[0];
-            String restName = workmateListObserved[1];
-            userManager.getWorkmatesList(restId, restName).observe(getViewLifecycleOwner(), workmateListObserver);
-        };
-
-        userManager.getWorkmatesListEveryWhere().observe(getViewLifecycleOwner(), workmateListEveryWhereObserver);
+        rv.setAdapter(new WorkmateListAdapter(service.getWorkmatesList(), getContext(), true, mainActivity));
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mainActivity.setAllWorkmates();
     }
 
     @Override

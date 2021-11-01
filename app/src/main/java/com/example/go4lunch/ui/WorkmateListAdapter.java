@@ -73,7 +73,7 @@ public class WorkmateListAdapter extends RecyclerView.Adapter<WorkmateListAdapte
             Glide.with(context).load(user.getUrlPicture())
                     .apply(RequestOptions.circleCropTransform())
                     .into(photo);
-            String textToPrint = user.getUsername() + (isFromAllWorkmates? " is eating at " + user.getRestaurantName() :  " is joining!");
+            String textToPrint = user.getUsername() + (isFromAllWorkmates? (user.getRestaurantName().equals("") ? " hasn't decided yet" : " is eating at " + user.getRestaurantName()) :  " is joining!");
             text.setText(textToPrint);
         }
     }
