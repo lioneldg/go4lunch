@@ -11,6 +11,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 
 import com.example.go4lunch.DI.DI;
+import com.example.go4lunch.models.Restaurant;
 import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
 import com.example.go4lunch.ui.WorkmateListAdapter;
@@ -117,6 +118,10 @@ public final class UserRepository {
         this.getRestaurantsCollection().document(restId).collection("workmates").document(getCurrentUser().getUid()).delete();
         this.getUsersCollection().document(getCurrentUser().getUid()).update("rest_id", "");
         this.getUsersCollection().document(getCurrentUser().getUid()).update("rest_name", "");
+    }
+
+    public void sendLike(String restId, String restaurantName) {
+        this.getUsersCollection().document(getCurrentUser().getUid()).collection("likes").add(new Restaurant(restId, restaurantName));
     }
 
     // Get restaurant Data from Firestore

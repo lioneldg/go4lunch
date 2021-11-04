@@ -26,9 +26,9 @@ import java.util.ArrayList;
 public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsListAdapter.RvViewHolder> {
     private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
     private Context context;
-    private static RecyclerViewClickListener itemListener;
+    private static ClickListener itemListener;
 
-    public RestaurantsListAdapter(Context context, RecyclerViewClickListener itemListener) {
+    public RestaurantsListAdapter(Context context, ClickListener itemListener) {
         this.context = context;
         this.itemListener = itemListener;
     }
@@ -66,7 +66,7 @@ public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsList
         private String placeId;
         private UserManager userManager = UserManager.getInstance();
 
-        public RvViewHolder(final View itemView, RecyclerViewClickListener itemListener) {
+        public RvViewHolder(final View itemView, ClickListener itemListener) {
             super(itemView);
             title = itemView.findViewById(R.id.cellTitle);
             address = itemView.findViewById(R.id.cellAddress);
@@ -80,7 +80,7 @@ public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsList
 
 
             itemView.setOnClickListener(view -> {
-                itemListener.recyclerViewListClicked(placeId);
+                itemListener.listClicked(placeId);
             });
         }
 
@@ -123,8 +123,8 @@ public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsList
         }
     }
 
-    public interface RecyclerViewClickListener {
-        public void recyclerViewListClicked(String place_id);
+    public interface ClickListener {
+        public void listClicked(String place_id);
     }
 
 }

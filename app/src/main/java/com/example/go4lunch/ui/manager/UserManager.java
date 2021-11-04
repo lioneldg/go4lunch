@@ -59,6 +59,8 @@ public class UserManager extends ViewModel {
 
     public void delWorkmate(String restId) { userRepository.delWorkmate(restId); }
 
+    public void sendLike(String restId, String restaurantName) {userRepository.sendLike(restId, restaurantName);}
+
     public MutableLiveData<ArrayList<User>> getWorkmatesList(String restId, String restName) { return userRepository.getWorkmatesList(restId, restName); }
 
     public MutableLiveData<String[]> getWorkmatesListEveryWhere() { return userRepository.getWorkmatesListEveryWhere(); }

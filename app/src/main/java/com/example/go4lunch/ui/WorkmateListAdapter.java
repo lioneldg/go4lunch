@@ -21,9 +21,9 @@ public class WorkmateListAdapter extends RecyclerView.Adapter<WorkmateListAdapte
     private ArrayList<User> workmateList;
     private Context context;
     private Boolean isFromAllWorkmates;
-    private static RecyclerViewClickListener itemListener;
+    private static ClickListener itemListener;
 
-    public WorkmateListAdapter(ArrayList<User> list, Context c, Boolean fromAllWorkmates, RecyclerViewClickListener itemListener) {
+    public WorkmateListAdapter(ArrayList<User> list, Context c, Boolean fromAllWorkmates, ClickListener itemListener) {
         workmateList = list;
         context = c;
         isFromAllWorkmates = fromAllWorkmates;
@@ -59,12 +59,12 @@ public class WorkmateListAdapter extends RecyclerView.Adapter<WorkmateListAdapte
         private final TextView text;
         private String spotId;
 
-        public WorkmateListViewHolder(final View itemView, RecyclerViewClickListener itemListener) {
+        public WorkmateListViewHolder(final View itemView, ClickListener itemListener) {
             super(itemView);
             photo = (ImageView) itemView.findViewById(R.id.profilePicture);
             text = ((TextView) itemView.findViewById(R.id.workmateListCellText));
             itemView.setOnClickListener(view -> {
-                itemListener.recyclerViewListClicked(spotId);
+                itemListener.listClicked(spotId);
             });
         }
 
@@ -78,8 +78,8 @@ public class WorkmateListAdapter extends RecyclerView.Adapter<WorkmateListAdapte
         }
     }
 
-    public interface RecyclerViewClickListener {
-        public void recyclerViewListClicked(String spotId);
+    public interface ClickListener {
+        public void listClicked(String spotId);
     }
 
 }

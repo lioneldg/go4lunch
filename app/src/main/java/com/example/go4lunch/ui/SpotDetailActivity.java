@@ -1,7 +1,9 @@
 package com.example.go4lunch.ui;
 import static com.example.go4lunch.BuildConfig.MAPS_API_KEY;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -43,6 +45,9 @@ public class SpotDetailActivity extends AppCompatActivity {
     private TextView star1;
     private TextView star2;
     private TextView star3;
+    private TextView call;
+    private TextView like;
+    private TextView website;
     private FloatingActionButton fab;
     private RecyclerView recyclerView;
     private UserManager userManager = UserManager.getInstance();
@@ -61,6 +66,9 @@ public class SpotDetailActivity extends AppCompatActivity {
         star1 = binding.star1;
         star2 = binding.star2;
         star3 = binding.star3;
+        call = binding.detailTextCall;
+        like = binding.detailTextLike;
+        website = binding.detailWebsite;
         fab = binding.detailFloatingButton;
         recyclerView = binding.list;
 
@@ -143,6 +151,41 @@ public class SpotDetailActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
             userManager.getWorkmatesList(detailSearchResult.getPlace_id(), detailSearchResult.getName()).observe(this, workmateListObserver);
+            setAllWorkmates();
         });
+
+        call.setOnClickListener(view->{
+            if(!detailSearchResult.getPhone().equals(" ")) {
+                Uri telephone = Uri.parse("tel:" + detailSearchResult.getPhone());
+                startActivity(new Intent(Intent.ACTION_DIAL, telephone));
+            }
+        });
+
+        like.setOnClickListener(view -> {
+            userManager.sendLike(detailSearchResult.getPlace_id(), detailSearchResult.getName());
+        });
+
+        website.setOnClickListener(view -> {
+            if(!detailSearchResult.getWebsite().equals(" ")) {
+                Uri web = Uri.parse(detailSearchResult.getWebsite());
+                startActivity(new Intent(Intent.ACTION_VIEW, web));
+            }
+        });
+    }
+
+    private void setAllWorkmates(){
+        service.clearWorkmatesList();
+        final Observer<String[]> workmateListEveryWhereObserver = workmateListObserved -> {
+            String restId = workmateListObserved[0];
+            String restName = workmateListObserved[1];
+            String userId = workmateListObserved[2];
+            String userName = workmateListObserved[3];
+            String urlPicture = workmateListObserved[4];
+            if(!userId.equals("")) {
+                service.addWorkmatesList(new User(userId, userName, urlPicture, restName, restId));
+            }
+        };
+
+        userManager.getWorkmatesListEveryWhere().observe(this, workmateListEveryWhereObserver);
     }
 }

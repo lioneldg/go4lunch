@@ -12,12 +12,6 @@ import com.example.go4lunch.databinding.FragmentSpotsBinding;
 public class SpotsFragment extends Fragment {
     private FragmentSpotsBinding binding;
     private RecyclerView rv;
-    private MainActivity mainActivity;
-
-    public SpotsFragment(MainActivity ma) {
-        mainActivity = ma;
-    }
-
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentSpotsBinding.inflate(inflater, container, false);
@@ -30,7 +24,7 @@ public class SpotsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        rv.setAdapter(new RestaurantsListAdapter(getContext(), mainActivity));
+        rv.setAdapter(new RestaurantsListAdapter(getContext(), (RestaurantsListAdapter.ClickListener) getActivity()));
     }
 
     @Override

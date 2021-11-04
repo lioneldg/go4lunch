@@ -2,9 +2,11 @@ package com.example.go4lunch.models;
 
 public class Restaurant {
     private String Id;
+    private String name;
 
-    public Restaurant(String id){
-        Id = id;
+    public Restaurant(String id, String name){
+        this.Id = id;
+        this.name = name;
     }
 
     public String getId() {
@@ -13,5 +15,13 @@ public class Restaurant {
 
     public void setId(String id) {
         Id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

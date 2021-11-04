@@ -49,7 +49,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends AppCompatActivity implements RestaurantsListAdapter.RecyclerViewClickListener, WorkmateListAdapter.RecyclerViewClickListener{
+public class MainActivity extends AppCompatActivity implements RestaurantsListAdapter.ClickListener, WorkmateListAdapter.ClickListener, MapFragment.ClickListener{
     private ActivityMainBinding binding;
     private FragmentManager fm;
     private FragmentTransaction ft;
@@ -69,8 +69,8 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
 
         fm = getSupportFragmentManager();
         mapFragment = new MapFragment();
-        spotsFragment = new SpotsFragment(this);
-        workmatesFragment = new WorkmatesFragment(this);
+        spotsFragment = new SpotsFragment();
+        workmatesFragment = new WorkmatesFragment();
 
         //set search bar layout
         setSupportActionBar(binding.toolbar);
@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         return true;
     }
 
-    private void changeFragment(Fragment frag){
+    protected void changeFragment(Fragment frag){
         ft = fm.beginTransaction();
         ft.replace(binding.mainFrameLayout.getId(),frag);
         ft.commit();
@@ -218,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
     }
 
     @Override
-    public void recyclerViewListClicked(String spotId) {
+    public void listClicked(String spotId) {
         placeSearchExecutor(spotId);
 
     }
@@ -260,7 +260,7 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         }
     }
 
-    public void setAllWorkmates(){
+    private void setAllWorkmates(){
         service.clearWorkmatesList();
         final Observer<String[]> workmateListEveryWhereObserver = workmateListObserved -> {
             String restId = workmateListObserved[0];

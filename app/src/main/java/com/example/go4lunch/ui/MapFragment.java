@@ -25,6 +25,7 @@ import com.example.go4lunch.DI.DI;
 import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.FragmentMapBinding;
 import com.example.go4lunch.models.NearbySearchResult;
+import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
 
 import com.example.go4lunch.tools.UrlRequest;
@@ -38,6 +39,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
 
@@ -45,6 +47,8 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -59,40 +63,58 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private ArrayList<String> placesIds;
     private SupportMapFragment mapFragment;
     private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
+    private Set<String> restIdSet;
+    private static ClickListener itemListener;
+    private View view;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentMapBinding.inflate(inflater, container, false);
-        View view = binding.getRoot();
-
+        view = binding.getRoot();
+        itemListener = (ClickListener) getActivity();
         locationPermissionGranted = false;
+        return view;
+    }
 
-        //test if google play is available
-        // Can be ConnectionResult.SUCCESS, SERVICE_MISSING, SERVICE_UPDATING, SERVICE_VERSION_UPDATE_REQUIRED, SERVICE_DISABLED, SERVICE_INVALID
-        boolean googleApiAvailability = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(requireContext()) == ConnectionResult.SUCCESS;
-
+    @Override
+    public void onResume() {
+        super.onResume();
+        prepareRestIdSet();
         mapFragment = SupportMapFragment.newInstance();
         //register the onMapReady callback method
         mapFragment.getMapAsync(this);
         //add map fragment to current view
-        getParentFragmentManager().beginTransaction().add(view.getId(), mapFragment).commit();
+        getParentFragmentManager().beginTransaction().replace(view.getId(), mapFragment).commit();
         // Construct a FusedLocationProviderClient.
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+    }
 
-        return view;
+    private void prepareRestIdSet(){
+        restIdSet = new HashSet<>();
+        ArrayList<User> workmates = service.getWorkmatesList();
+        for(int i = 0; i < workmates.size(); i++){
+            if(!workmates.get(i).getRestaurantId().equals("")) {
+                restIdSet.add(workmates.get(i).getRestaurantId());
+            }
+        }
     }
 
    @Override
     public void onMapReady(@NonNull @NotNull GoogleMap gm) {
         googleMap = gm;
+        googleMap.setOnMarkerClickListener(marker -> {
+            String placeId = (String) marker.getTag();
+            itemListener.listClicked(placeId);
+            return false;
+        });
         getLocationPermission();
     }
 
     private void getLocationPermission() {
-        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationPermissionGranted = true;
             updateLocationUI();
         } else {
-            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+            requestPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION);
         }
     }
 
@@ -211,22 +233,28 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             for(int i = 0; service.getNearbySearchResults().size() > i; i++){
                 NearbySearchResult nearbySearchResult = service.getNearbySearchResults().get(i);
                 LatLng position = new LatLng(nearbySearchResult.getLat(), nearbySearchResult.getLng());
-                addMarkerOption(position, nearbySearchResult.getName());
+                addMarkerOption(position, nearbySearchResult.getName(), nearbySearchResult.getPlace_id());
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private void addMarkerOption(LatLng position, String title){
-        googleMap.addMarker(new MarkerOptions()
+    private void addMarkerOption(LatLng position, String title, String placeId){
+        Marker marker = googleMap.addMarker(new MarkerOptions()
                 .position(position)
-                .title(title).icon(VectorToBitmap.convert(getResources(), R.drawable.ic_baseline_restaurant_24)));
+                .title(title)
+                .icon(VectorToBitmap.convert(getResources(), R.drawable.ic_baseline_restaurant_24, restIdSet.contains(placeId))));
+        marker.setTag(placeId);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    public interface ClickListener {
+        public void listClicked(String spotId);
     }
 }
