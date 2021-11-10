@@ -1,5 +1,7 @@
 package com.example.go4lunch.ui;
 import static com.example.go4lunch.BuildConfig.MAPS_API_KEY;
+import static java.lang.Thread.sleep;
+
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -42,6 +44,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -79,13 +82,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public void onResume() {
         super.onResume();
         prepareRestIdSet();
+        // Construct a FusedLocationProviderClient.
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
         mapFragment = SupportMapFragment.newInstance();
         //register the onMapReady callback method
         mapFragment.getMapAsync(this);
         //add map fragment to current view
         getParentFragmentManager().beginTransaction().replace(view.getId(), mapFragment).commit();
-        // Construct a FusedLocationProviderClient.
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity());
     }
 
     private void prepareRestIdSet(){
@@ -138,6 +141,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 googleMap.setMyLocationEnabled(false);
                 googleMap.getUiSettings().setMyLocationButtonEnabled(false);
                 lastKnownLocation = null;
+                service.setLastKnownLocation(null);
             }
         } catch (SecurityException e)  {
             Log.e("Exception: %s", e.getMessage());
@@ -148,17 +152,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         try {
             if (googleMap != null && locationPermissionGranted) {
                 Task<Location> locationResult = fusedLocationProviderClient.getLastLocation();
-                locationResult.addOnCompleteListener(requireActivity(), task -> {
-                    if (task.isSuccessful()) {
-                        lastKnownLocation = task.getResult();
-                        if (lastKnownLocation != null) {
-                            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude()), DEFAULT_ZOOM));
-                            placeSearchNearBy(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+                    locationResult.addOnCompleteListener(getActivity(), task -> {
+                        if (task.isSuccessful()) {
+                            lastKnownLocation = task.getResult();
+                            service.setLastKnownLocation(lastKnownLocation);
+                            if (lastKnownLocation != null) {
+                                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+                                placeSearchNearBy(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+                            }
+                        } else {
+                            googleMap.getUiSettings().setMyLocationButtonEnabled(false);
                         }
-                    } else {
-                        googleMap.getUiSettings().setMyLocationButtonEnabled(false);
-                    }
-                });
+                    });
             }
         } catch (SecurityException e)  {
             Log.e("Exception: %s", e.getMessage(), e);

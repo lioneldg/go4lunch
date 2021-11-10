@@ -14,6 +14,7 @@ import androidx.lifecycle.Observer;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -30,6 +31,7 @@ import com.example.go4lunch.DI.DI;
 import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.ActivityMainBinding;
 import com.example.go4lunch.models.DetailSearchResult;
+import com.example.go4lunch.models.Restaurant;
 import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
 import com.example.go4lunch.tools.PhotoRefToBitmap;
@@ -42,6 +44,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -130,7 +133,10 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
 
             @Override
             public boolean onQueryTextChange(String s) {
-
+                if(s.length() > 1) {
+                    autocompleteExecutor(s);//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                }
+                ArrayList<Restaurant> listTest = service.getAutoCompleteList();
                 return false;
             }
         });
@@ -257,6 +263,56 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
             executor.awaitTermination(1, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void autocompleteExecutor(String input){//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        service.clearAutoCompleteList();
+        Location lastKnowLocation = service.getLastKnowLocation();
+        if(!input.equals("") && input != null && lastKnowLocation != null) {
+            String url = "https://maps.googleapis.com/maps/api/place/autocomplete/json?input="
+                    + input
+                    + "&location="
+                    + lastKnowLocation.getLatitude()
+                    + "%2C"
+                    + lastKnowLocation.getLongitude()
+                    + "&radius=2000&types=establishment&key="
+                    + MAPS_API_KEY;
+
+            //execute query
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            executor.execute(() -> {
+                String urlRequestResult = UrlRequest.execute(url);
+                JSONArray predictions = null;
+                try {
+                    //parse results to JSON + add result to searchResult
+                    JSONObject predictionsObject = new JSONObject(urlRequestResult);
+                    predictions = predictionsObject.getJSONArray("predictions");
+                    for(int i = 0; i < predictions.length(); i++){
+                        boolean isRestaurant = false;
+                        String name;
+                        String placeId;
+                        JSONObject currentPredictions = (JSONObject) predictions.get(i);
+                        JSONArray currentTypesArray = currentPredictions.getJSONArray("types");
+                        for(int j = 0; j < currentTypesArray.length(); j++){
+                            if(currentTypesArray.get(j).equals("restaurant")){
+                                isRestaurant = true;
+                                name = currentPredictions.getString("description");
+                                placeId = currentPredictions.getString("place_id");
+                                service.addAutoCompleteList(new Restaurant(placeId, name));
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+            try {
+                executor.shutdown();
+                executor.awaitTermination(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
