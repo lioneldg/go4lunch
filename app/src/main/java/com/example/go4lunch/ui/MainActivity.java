@@ -31,6 +31,7 @@ import com.example.go4lunch.DI.DI;
 import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.ActivityMainBinding;
 import com.example.go4lunch.models.DetailSearchResult;
+import com.example.go4lunch.models.NearbySearchResult;
 import com.example.go4lunch.models.Restaurant;
 import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
@@ -40,6 +41,7 @@ import com.example.go4lunch.ui.manager.UserManager;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
 import com.firebase.ui.auth.IdpResponse;
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -127,16 +129,20 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
-
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String s) {
+                mapFragment.clearMap();
                 if(s.length() > 1) {
-                    autocompleteExecutor(s);//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    autocompleteExecutor(s);
+                } else {
+                    service.clearNearbySearchResult();
+                    Location lastKnownLocation = service.getLastKnowLocation();
+                    mapFragment.spotsFragment = spotsFragment;
+                    mapFragment.placeSearchNearBy(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
                 }
-                ArrayList<Restaurant> listTest = service.getAutoCompleteList();
                 return false;
             }
         });
@@ -225,12 +231,11 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
 
     @Override
     public void listClicked(String spotId) {
-        placeSearchExecutor(spotId);
-
+        placeSearchExecutor(spotId, false);
     }
 
-    private void placeSearchExecutor(String spotId){
-        String url = "https://maps.googleapis.com/maps/api/place/details/json?place_id=" + spotId + "&fields=name%2Crating%2Cformatted_phone_number%2Cphoto%2Cvicinity%2Cwebsite&key=" + MAPS_API_KEY;
+    private void placeSearchExecutor(String spotId, boolean isFromAutoComplete){
+        String url = "https://maps.googleapis.com/maps/api/place/details/json?place_id=" + spotId + "&fields=name%2Crating%2Cformatted_phone_number%2Cphoto%2Cvicinity%2Cwebsite%2Cgeometry%2Copening_hours&key=" + MAPS_API_KEY;
         //execute query
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
@@ -250,10 +255,36 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
                 String _photoRef = result.getJSONArray("photos").getJSONObject(0).getString("photo_reference");
                 String _name = result.getString("name");
                 String _vicinity = result.getString("vicinity");
-                double _rating = result.getDouble("rating");
-                service.setDetailSearchResult(new DetailSearchResult(spotId, _name, _photoRef, _rating, _vicinity, _website, _phone));
-                Intent detailIntent = new Intent(MainActivity.this, SpotDetailActivity.class);
-                startActivity(detailIntent);
+                int _rating = (int) Math.round((result.getDouble("rating") / 5) * 3);
+                JSONObject geometry = result.getJSONObject("geometry");
+                JSONObject location = geometry.getJSONObject("location");
+                Double lat = location.getDouble("lat");
+                Double lng = location.getDouble("lng");
+                JSONObject opening_hours = result.getJSONObject("opening_hours");
+                boolean open_now = opening_hours.getBoolean("open_now");
+                if(isFromAutoComplete){
+                    Location lastKnownLocation = service.getLastKnowLocation();
+                    float[] distanceBetweenArray = new float[1];
+                    Location.distanceBetween(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude(), lat, lng, distanceBetweenArray);
+                    int distanceBetween = Math.round(distanceBetweenArray[0]);
+                    if(distanceBetween <= 2000) {
+                        NearbySearchResult nearbySearchResult = new NearbySearchResult();
+                        nearbySearchResult.setName(_name);
+                        nearbySearchResult.setVicinity(_vicinity);
+                        nearbySearchResult.setPlace_id(spotId);
+                        nearbySearchResult.setRating(_rating);
+                        nearbySearchResult.setLat(lat);
+                        nearbySearchResult.setLng(lng);
+                        nearbySearchResult.setOpen_now(open_now);
+                        nearbySearchResult.setPhoto_reference(_photoRef);
+                        nearbySearchResult.setDistanceBetween(distanceBetween);
+                        service.addNearbySearchResult(nearbySearchResult);
+                    }
+                } else {
+                    service.setDetailSearchResult(new DetailSearchResult(spotId, _name, _photoRef, _rating, _vicinity, _website, _phone));
+                    Intent detailIntent = new Intent(MainActivity.this, SpotDetailActivity.class);
+                    startActivity(detailIntent);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -261,12 +292,22 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         try {
             executor.shutdown();
             executor.awaitTermination(1, TimeUnit.SECONDS);
+            if(isFromAutoComplete && mapFragment.isVisible()){
+                for(int i = 0; service.getNearbySearchResults().size() > i; i++){
+                    NearbySearchResult nearbySearchResult = service.getNearbySearchResults().get(i);
+                    LatLng position = new LatLng(nearbySearchResult.getLat(), nearbySearchResult.getLng());
+                    mapFragment.addMarkerOption(position, nearbySearchResult.getName(), nearbySearchResult.getPlace_id());
+                }
+            }
+            if(spotsFragment.isVisible()) {
+                spotsFragment.onDataSetChange();
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private void autocompleteExecutor(String input){//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    private void autocompleteExecutor(String input){
         service.clearAutoCompleteList();
         Location lastKnowLocation = service.getLastKnowLocation();
         if(!input.equals("") && input != null && lastKnowLocation != null) {
@@ -289,14 +330,12 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
                     JSONObject predictionsObject = new JSONObject(urlRequestResult);
                     predictions = predictionsObject.getJSONArray("predictions");
                     for(int i = 0; i < predictions.length(); i++){
-                        boolean isRestaurant = false;
                         String name;
                         String placeId;
                         JSONObject currentPredictions = (JSONObject) predictions.get(i);
                         JSONArray currentTypesArray = currentPredictions.getJSONArray("types");
                         for(int j = 0; j < currentTypesArray.length(); j++){
                             if(currentTypesArray.get(j).equals("restaurant")){
-                                isRestaurant = true;
                                 name = currentPredictions.getString("description");
                                 placeId = currentPredictions.getString("place_id");
                                 service.addAutoCompleteList(new Restaurant(placeId, name));
@@ -310,6 +349,15 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
             try {
                 executor.shutdown();
                 executor.awaitTermination(1, TimeUnit.SECONDS);
+                //now autocompleteList contains all Restaurants of filter with no distance limitation
+                //we need to search details for each with placeSearchExecutor function
+                //and put each result in NearBySearchResult list with 2000m distance limitation
+                service.clearNearbySearchResult();
+                ArrayList<Restaurant> autoCompleteList = service.getAutoCompleteList();
+                for(int i = 0; i <autoCompleteList.size(); i++){
+                    String placeId = autoCompleteList.get(i).getId();
+                    placeSearchExecutor(placeId, true);
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

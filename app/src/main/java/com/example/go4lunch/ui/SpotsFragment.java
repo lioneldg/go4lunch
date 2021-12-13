@@ -21,10 +21,14 @@ public class SpotsFragment extends Fragment {
         return binding.getRoot();
     }
 
+    protected void onDataSetChange(){
+        rv.setAdapter(new RestaurantsListAdapter(getContext(), (RestaurantsListAdapter.ClickListener) getActivity()));
+    }
+
     @Override
     public void onResume() {
         super.onResume();
-        rv.setAdapter(new RestaurantsListAdapter(getContext(), (RestaurantsListAdapter.ClickListener) getActivity()));
+        this.onDataSetChange();
     }
 
     @Override

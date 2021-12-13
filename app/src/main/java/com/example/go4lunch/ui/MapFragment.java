@@ -69,6 +69,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private Set<String> restIdSet;
     private static ClickListener itemListener;
     private View view;
+    protected SpotsFragment spotsFragment;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentMapBinding.inflate(inflater, container, false);
@@ -113,11 +114,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void getLocationPermission() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationPermissionGranted = true;
             updateLocationUI();
         } else {
-            requestPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION);
+            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         }
     }
 
@@ -170,7 +171,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    private void placeSearchNearBy(double lat, double lng){
+    protected void placeSearchNearBy(double lat, double lng){
         placesIds = new ArrayList<String>();
         String placesSearchStr = "https://maps.googleapis.com/maps/api/place/nearbysearch/" +
                 "json?location="+lat+","+lng+
@@ -235,22 +236,31 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         try {
             executor.shutdown();
             executor.awaitTermination(1, TimeUnit.SECONDS);
-            for(int i = 0; service.getNearbySearchResults().size() > i; i++){
-                NearbySearchResult nearbySearchResult = service.getNearbySearchResults().get(i);
-                LatLng position = new LatLng(nearbySearchResult.getLat(), nearbySearchResult.getLng());
-                addMarkerOption(position, nearbySearchResult.getName(), nearbySearchResult.getPlace_id());
+             if(this.isVisible()){
+                for (int i = 0; service.getNearbySearchResults().size() > i; i++) {
+                    NearbySearchResult nearbySearchResult = service.getNearbySearchResults().get(i);
+                    LatLng position = new LatLng(nearbySearchResult.getLat(), nearbySearchResult.getLng());
+                    addMarkerOption(position, nearbySearchResult.getName(), nearbySearchResult.getPlace_id());
+                }
             }
+             if(spotsFragment != null && spotsFragment.isVisible()){
+                 spotsFragment.onDataSetChange();//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private void addMarkerOption(LatLng position, String title, String placeId){
+    protected void addMarkerOption(LatLng position, String title, String placeId){
         Marker marker = googleMap.addMarker(new MarkerOptions()
                 .position(position)
                 .title(title)
                 .icon(VectorToBitmap.convert(getResources(), R.drawable.ic_baseline_restaurant_24, restIdSet.contains(placeId))));
         marker.setTag(placeId);
+    }
+
+    protected void clearMap(){
+        googleMap.clear();
     }
 
     @Override
