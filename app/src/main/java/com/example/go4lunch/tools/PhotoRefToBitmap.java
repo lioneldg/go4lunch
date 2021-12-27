@@ -23,9 +23,7 @@ public class PhotoRefToBitmap {
     }
 
     private static Bitmap placeSearchImage(String photoRef, int maxWidth){
-        String photoUrl = "https://maps.googleapis.com/maps/api/place/photo?photo_reference=" + photoRef
-                + "&maxwidth=" + maxWidth
-                + "&key=" + MAPS_API_KEY;
+        String photoUrl = "https://maps.googleapis.com/maps/api/place/photo?photo_reference=" + photoRef + "&maxwidth=" + maxWidth + "&key=" + MAPS_API_KEY;
         return getPlaceImageExecutor(photoUrl);
     }
 

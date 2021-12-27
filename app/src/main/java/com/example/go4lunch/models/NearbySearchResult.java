@@ -10,8 +10,6 @@ public class NearbySearchResult {
     private int rating;
     private String vicinity = "";
     private int distanceBetween;
-    private String website = " ";
-    private String phone = " ";
 
     public String getName() {
         return name;
@@ -80,15 +78,5 @@ public class NearbySearchResult {
     public int getDistanceBetween() { return distanceBetween; }
 
     public void setDistanceBetween(int distanceBetween) { this.distanceBetween = distanceBetween; }
-
-    public String getWebsite() { return website; }
-
-    public void setWebsite(String website) {
-        this.website = website;
-    }
-
-    public String getPhone() { return phone; }
-
-    public void setPhone(String phone) { this.phone = phone; }
 }
 

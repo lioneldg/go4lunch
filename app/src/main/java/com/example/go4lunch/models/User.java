@@ -30,9 +30,6 @@ public class User {
     public String getRestaurantId() { return restaurantId; }
 
     // --- SETTERS ---
-    public void setUsername(String username) { this.username = username; }
-    public void setUid(String uid) { this.uid = uid; }
-    public void setUrlPicture(@Nullable String urlPicture) { this.urlPicture = urlPicture; }
     public void setRestaurantName(String restName) { this.restaurantName = restName; }
     public void setRestaurantId(String restId) { this.restaurantId = restId; }
 }

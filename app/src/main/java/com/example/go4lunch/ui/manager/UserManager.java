@@ -16,7 +16,7 @@ import java.util.ArrayList;
 public class UserManager extends ViewModel {
 
     private static volatile UserManager instance;
-    private  UserRepository userRepository;
+    private final UserRepository userRepository;
 
     private UserManager() {
         userRepository = UserRepository.getInstance();
@@ -49,10 +49,6 @@ public class UserManager extends ViewModel {
 
     public Task<Void> signOut(Context context){
         return userRepository.signOut(context);
-    }
-
-    public Task<Void> deleteUser(Context context){
-        return userRepository.deleteUser(context);
     }
 
     public void addWorkmate(String restId, String name) { userRepository.addWorkmate(restId, name); }

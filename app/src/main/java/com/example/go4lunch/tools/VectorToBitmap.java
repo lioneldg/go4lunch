@@ -16,6 +16,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 public class VectorToBitmap {
     public static BitmapDescriptor convert(Resources resources, @DrawableRes int id, boolean isSomeWorkmates) {
         Drawable vectorDrawable = ResourcesCompat.getDrawable( resources, id, null);
+        assert vectorDrawable != null;
         Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(),
                 vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);

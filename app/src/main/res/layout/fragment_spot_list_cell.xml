@@ -17,21 +17,21 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:id="@+id/cellTitle"
-            android:text="default title"/>
+            android:text="@string/default_title"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:id="@+id/cellAddress"
-            android:text="default address"/>
+            android:text="@string/default_address"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/cellOpenHours"
             android:textStyle="italic"
-            android:text="default open hours"/>
+            android:text="@string/default_open_hours"/>
     </LinearLayout>
 
 
@@ -46,14 +46,14 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:id="@+id/cellDistance"
-            android:text="-1 m"/>
+            android:text="@string/_0_m"/>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:id="@+id/cellWorkmatesNumber"
-            android:text="(-1)"
+            android:text="@string/_0"
             app:drawableStartCompat="@drawable/ic_baseline_person_outline_24" />
         <LinearLayout
             android:layout_width="match_parent"
@@ -88,5 +88,5 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1.5"
-        />
+        android:contentDescription="@string/cell_image" />
 </LinearLayout>

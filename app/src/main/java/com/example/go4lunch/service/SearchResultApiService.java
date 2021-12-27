@@ -6,8 +6,6 @@ import com.example.go4lunch.models.DetailSearchResult;
 import com.example.go4lunch.models.NearbySearchResult;
 import com.example.go4lunch.models.Restaurant;
 import com.example.go4lunch.models.User;
-import com.example.go4lunch.ui.WorkmateListAdapter;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,16 +48,6 @@ public class SearchResultApiService implements  InterfaceSearchResultApiService{
     @Override
     public void addAutoCompleteList(Restaurant restaurant) {
         this.autocompleteList.add(restaurant);
-    }
-
-    @Override
-    public void delWorkmatesList(int index) {
-        this.workmatesList.remove(index);
-    }
-
-    @Override
-    public void delAutoCompleteList(int index) {
-        this.autocompleteList.remove(index);
     }
 
     @Override

@@ -20,8 +20,6 @@ public interface InterfaceSearchResultApiService {
     ArrayList<User> getWorkmatesList();
     void addWorkmatesList(User workmate);
     void addAutoCompleteList(Restaurant restaurant);
-    void delWorkmatesList(int index);
-    void delAutoCompleteList(int index);
     void clearNearbySearchResult();
     void clearWorkmatesList();
     void clearAutoCompleteList();

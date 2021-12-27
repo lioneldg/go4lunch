@@ -13,7 +13,7 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.go4lunch.DI.DI;
+import com.example.go4lunch.di.DI;
 import com.example.go4lunch.R;
 import com.example.go4lunch.models.NearbySearchResult;
 import com.example.go4lunch.models.User;
@@ -25,12 +25,12 @@ import java.util.ArrayList;
 
 public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsListAdapter.RvViewHolder> {
     private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
-    private Context context;
+    private final Context context;
     private static ClickListener itemListener;
 
     public RestaurantsListAdapter(Context context, ClickListener itemListener) {
         this.context = context;
-        this.itemListener = itemListener;
+        RestaurantsListAdapter.itemListener = itemListener;
     }
 
     @NonNull
@@ -43,7 +43,7 @@ public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsList
 
     @Override
     public void onBindViewHolder(@NonNull RvViewHolder holder, int position) {
-        holder.display(service.getNearbySearchResults().get(position), position, context);
+        holder.display(service.getNearbySearchResults().get(position), context);
     }
 
     @Override
@@ -62,9 +62,8 @@ public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsList
         private final TextView star1;
         private final TextView star2;
         private final TextView star3;
-        private int itemPosition;
         private String placeId;
-        private UserManager userManager = UserManager.getInstance();
+        private final UserManager userManager = UserManager.getInstance();
 
         public RvViewHolder(final View itemView, ClickListener itemListener) {
             super(itemView);
@@ -79,24 +78,23 @@ public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsList
             star3 = itemView.findViewById(R.id.star3);
 
 
-            itemView.setOnClickListener(view -> {
-                itemListener.listClicked(placeId);
-            });
+            itemView.setOnClickListener(view -> itemListener.listClicked(placeId));
         }
 
-        public void display(NearbySearchResult nearbySearchResult, int position, Context context) {
+        public void display(NearbySearchResult nearbySearchResult, Context context) {
             placeId = nearbySearchResult.getPlace_id();
             //workmateList observer
             final Observer<ArrayList<User>> workmateListObserver = workmateList -> {
-                workmatesNumber.setText("("+workmateList.size()+")");
+                String workmatesNumberStr = "(" + workmateList.size() + ")";
+                        workmatesNumber.setText(workmatesNumberStr);
             };
             userManager.getWorkmatesList(placeId, nearbySearchResult.getName()).observe((LifecycleOwner) context, workmateListObserver);
 
-            itemPosition = position;
             title.setText(nearbySearchResult.getName());
             address.setText(nearbySearchResult.getVicinity());
             hours.setText(nearbySearchResult.getOpen_now() ? "Open": "Closed");
-            distance.setText(nearbySearchResult.getDistanceBetween()+" m");
+            String distanceStr = nearbySearchResult.getDistanceBetween() + " m";
+            distance.setText(distanceStr);
             Bitmap photo = PhotoRefToBitmap.getBitmap(nearbySearchResult.getPhoto_reference(), 200);
             image.setImageBitmap(photo);
             int starNumber = nearbySearchResult.getRating();
@@ -124,7 +122,7 @@ public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsList
     }
 
     public interface ClickListener {
-        public void listClicked(String place_id);
+        void listClicked(String place_id);
     }
 
 }

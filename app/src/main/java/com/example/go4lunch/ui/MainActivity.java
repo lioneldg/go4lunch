@@ -2,18 +2,8 @@ package com.example.go4lunch.ui;
 
 import static com.example.go4lunch.BuildConfig.MAPS_API_KEY;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.Observer;
-
+import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -25,9 +15,20 @@ import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.example.go4lunch.DI.DI;
+import com.example.go4lunch.di.DI;
 import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.ActivityMainBinding;
 import com.example.go4lunch.models.DetailSearchResult;
@@ -35,14 +36,11 @@ import com.example.go4lunch.models.NearbySearchResult;
 import com.example.go4lunch.models.Restaurant;
 import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
-import com.example.go4lunch.tools.PhotoRefToBitmap;
 import com.example.go4lunch.tools.UrlRequest;
 import com.example.go4lunch.ui.manager.UserManager;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
-import com.firebase.ui.auth.IdpResponse;
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -50,6 +48,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -57,14 +56,14 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity implements RestaurantsListAdapter.ClickListener, WorkmateListAdapter.ClickListener, MapFragment.ClickListener{
     private ActivityMainBinding binding;
     private FragmentManager fm;
-    private FragmentTransaction ft;
     private MapFragment mapFragment;
     private SpotsFragment spotsFragment;
     private WorkmatesFragment workmatesFragment;
     private SearchView searchView;
     private DrawerLayout drawer;
-    private UserManager userManager = UserManager.getInstance();
+    private final UserManager userManager = UserManager.getInstance();
     private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
+    private ActivityResultLauncher<Intent> activityResultLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +83,10 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         //set bottom bar
         setNavigationListener();
         userManager.signOut(getApplicationContext());
+        activityResultLauncher = registerForActivityResult(
+                new FirebaseAuthUIActivityResultContract(),
+                this::onSignInResult
+        );
         signIn();
         setAllWorkmates();
     }
@@ -93,22 +96,16 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         ActionBarDrawerToggle drawerToggle =  new ActionBarDrawerToggle(this, drawer, R.string.open, R.string.close);
         drawer.addDrawerListener(drawerToggle);
         drawerToggle.syncState();
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         MenuItem yourLunch = binding.navigationView.getMenu().findItem(R.id.your_lunch);
         MenuItem settings = binding.navigationView.getMenu().findItem(R.id.settings);
         MenuItem logout = binding.navigationView.getMenu().findItem(R.id.logout);
-        yourLunch.setOnMenuItemClickListener(menuItem -> {
-                    return false;
-                }
-        );
+        yourLunch.setOnMenuItemClickListener(menuItem -> false);
 
-        settings.setOnMenuItemClickListener(menuItem -> {
-                    return false;
-                }
-        );
+        settings.setOnMenuItemClickListener(menuItem -> false);
 
         logout.setOnMenuItemClickListener(menuItem -> {
-                   userManager.signOut(getApplicationContext()).addOnSuccessListener(task -> Snackbar.make(binding.getRoot(), "DÉCONNECTÉ", Snackbar.LENGTH_SHORT).show());
+                   userManager.signOut(getApplicationContext()).addOnSuccessListener(task -> signIn());
                     return false;
                 }
         );
@@ -125,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.options_menu, menu);
         searchView = (SearchView) menu.findItem(R.id.search).getActionView();
-        searchView.setQueryHint("Search restaurants");
+        searchView.setQueryHint(getString(R.string.search_restaurant));
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
@@ -154,48 +151,44 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         binding.bottomBar.setOnItemSelectedListener(item -> bottomBarChangeView(item.getItemId()));
     }
 
+    @SuppressLint("NonConstantResourceId")
     private Boolean bottomBarChangeView(Integer integer){
         switch (integer) {
             case R.id.action_map:
-                setTitle("I'm Hungry!");
+                setTitle(getString(R.string.i_m_hungry));
                 changeFragment(mapFragment);
                 searchView.setVisibility(View.VISIBLE);
                 break;
             case R.id.action_spots_list:
-                setTitle("I'm Hungry!");
+                setTitle(getString(R.string.i_m_hungry));
                 changeFragment(spotsFragment);
                 searchView.setVisibility(View.VISIBLE);
                 break;
             case R.id.action_workmates_list:
                 changeFragment(workmatesFragment);
                 searchView.setVisibility(View.INVISIBLE);
-                setTitle("Available workmates");
+                setTitle(getString(R.string.available_workmates));
         }
         return true;
     }
 
     protected void changeFragment(Fragment frag){
-        ft = fm.beginTransaction();
+        FragmentTransaction ft = fm.beginTransaction();
         ft.replace(binding.mainFrameLayout.getId(),frag);
         ft.commit();
     }
 
     private void signIn() {
-        registerForActivityResult(
-                new FirebaseAuthUIActivityResultContract(),
-                result -> onSignInResult(result)
-        ).launch(userManager.signInIntent());
+        activityResultLauncher.launch(userManager.signInIntent());
     }
 
     private void onSignInResult(FirebaseAuthUIAuthenticationResult result) {
-        IdpResponse response = result.getIdpResponse();
         if (result.getResultCode() == RESULT_OK) {
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-            Snackbar.make(binding.getRoot(), "CONNECTÉ", Snackbar.LENGTH_SHORT).show();
             changeFragment(mapFragment);
             updateUIWithUserData(user);
         } else {
-            Snackbar.make(binding.getRoot(), "NON CONNECTÉ", Snackbar.LENGTH_SHORT).show();
+            signIn();
         }
     }
 
@@ -231,10 +224,10 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
 
     @Override
     public void listClicked(String spotId) {
-        placeSearchExecutor(spotId, false);
+        placeSearchExecutor(spotId, false, true);
     }
 
-    private void placeSearchExecutor(String spotId, boolean isFromAutoComplete){
+    private void placeSearchExecutor(String spotId, boolean isFromAutoComplete, boolean isSearchFinished){
         String url = "https://maps.googleapis.com/maps/api/place/details/json?place_id=" + spotId + "&fields=name%2Crating%2Cformatted_phone_number%2Cphoto%2Cvicinity%2Cwebsite%2Cgeometry%2Copening_hours&key=" + MAPS_API_KEY;
         //execute query
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -250,18 +243,22 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
             }
 
             try {
-                String _phone = result.getString("formatted_phone_number");
-                String _website = result.getString("website");
-                String _photoRef = result.getJSONArray("photos").getJSONObject(0).getString("photo_reference");
-                String _name = result.getString("name");
-                String _vicinity = result.getString("vicinity");
-                int _rating = (int) Math.round((result.getDouble("rating") / 5) * 3);
+                assert result != null;
+                String _phone = result.optString("formatted_phone_number");
+                String _website = result.optString("website");
+                JSONArray _photos =  result.optJSONArray("photos");
+                JSONObject photos = _photos != null ? _photos.getJSONObject(0) : null;
+                String _photoRef = photos != null ? photos.optString("photo_reference") : null;
+
+                String _name = result.optString("name");
+                String _vicinity = result.optString("vicinity");
+                int _rating = (int) Math.round(result.optDouble("rating") / 5 * 3);
                 JSONObject geometry = result.getJSONObject("geometry");
                 JSONObject location = geometry.getJSONObject("location");
-                Double lat = location.getDouble("lat");
-                Double lng = location.getDouble("lng");
-                JSONObject opening_hours = result.getJSONObject("opening_hours");
-                boolean open_now = opening_hours.getBoolean("open_now");
+                double lat = location.getDouble("lat");
+                double lng = location.getDouble("lng");
+                JSONObject opening_hours = result.optJSONObject("opening_hours");
+                boolean open_now = opening_hours != null && opening_hours.getBoolean("open_now");
                 if(isFromAutoComplete){
                     Location lastKnownLocation = service.getLastKnowLocation();
                     float[] distanceBetweenArray = new float[1];
@@ -292,14 +289,14 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         try {
             executor.shutdown();
             executor.awaitTermination(1, TimeUnit.SECONDS);
-            if(isFromAutoComplete && mapFragment.isVisible()){
+            if(isSearchFinished && isFromAutoComplete && mapFragment.isVisible()){
                 for(int i = 0; service.getNearbySearchResults().size() > i; i++){
                     NearbySearchResult nearbySearchResult = service.getNearbySearchResults().get(i);
                     LatLng position = new LatLng(nearbySearchResult.getLat(), nearbySearchResult.getLng());
                     mapFragment.addMarkerOption(position, nearbySearchResult.getName(), nearbySearchResult.getPlace_id());
                 }
             }
-            if(spotsFragment.isVisible()) {
+            if(isSearchFinished && spotsFragment.isVisible()) {
                 spotsFragment.onDataSetChange();
             }
         } catch (InterruptedException e) {
@@ -309,8 +306,9 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
 
     private void autocompleteExecutor(String input){
         service.clearAutoCompleteList();
+        service.clearNearbySearchResult();
         Location lastKnowLocation = service.getLastKnowLocation();
-        if(!input.equals("") && input != null && lastKnowLocation != null) {
+        if(!input.equals("") && lastKnowLocation != null) {
             String url = "https://maps.googleapis.com/maps/api/place/autocomplete/json?input="
                     + input
                     + "&location="
@@ -324,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
             ExecutorService executor = Executors.newSingleThreadExecutor();
             executor.execute(() -> {
                 String urlRequestResult = UrlRequest.execute(url);
-                JSONArray predictions = null;
+                JSONArray predictions;
                 try {
                     //parse results to JSON + add result to searchResult
                     JSONObject predictionsObject = new JSONObject(urlRequestResult);
@@ -336,7 +334,7 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
                         JSONArray currentTypesArray = currentPredictions.getJSONArray("types");
                         for(int j = 0; j < currentTypesArray.length(); j++){
                             if(currentTypesArray.get(j).equals("restaurant")){
-                                name = currentPredictions.getString("description");
+                                name = currentPredictions.optString("description");
                                 placeId = currentPredictions.getString("place_id");
                                 service.addAutoCompleteList(new Restaurant(placeId, name));
                             }
@@ -352,11 +350,11 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
                 //now autocompleteList contains all Restaurants of filter with no distance limitation
                 //we need to search details for each with placeSearchExecutor function
                 //and put each result in NearBySearchResult list with 2000m distance limitation
-                service.clearNearbySearchResult();
                 ArrayList<Restaurant> autoCompleteList = service.getAutoCompleteList();
                 for(int i = 0; i <autoCompleteList.size(); i++){
                     String placeId = autoCompleteList.get(i).getId();
-                    placeSearchExecutor(placeId, true);
+                    boolean isSearchFinished = i+1 == autoCompleteList.size();
+                    placeSearchExecutor(placeId, true, isSearchFinished);
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();

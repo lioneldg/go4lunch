@@ -10,7 +10,8 @@
         android:layout_height="280dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="@string/image_detail" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/detailFloatingButton"
@@ -20,7 +21,8 @@
         android:layout_gravity="end|bottom"
         app:layout_constraintBottom_toTopOf="@+id/descriptionLayout"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/detailImage" />
+        app:layout_constraintTop_toBottomOf="@+id/detailImage"
+        android:contentDescription="@string/floating_button" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/descriptionLayout"
@@ -35,9 +37,9 @@
             android:layout_width="wrap_content"
             android:layout_height="40dp"
             android:gravity="center"
-            android:text="Default name"
+            android:text="@string/default_name"
             android:textColor="@color/white"
-            android:textSize="16dp"
+            android:textSize="16sp"
             android:layout_marginStart="10dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/descriptionLayout" />
@@ -78,9 +80,9 @@
             android:layout_width="wrap_content"
             android:layout_height="40dp"
             android:layout_marginStart="10dp"
-            android:text="Default address"
+            android:text="@string/default_address"
             android:textColor="@color/white"
-            android:textSize="12dp"
+            android:textSize="12sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/detailName" />
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -100,27 +102,27 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:drawableTop="@drawable/ic_baseline_phone_24"
-            android:text="CALL"
-            android:textAlignment="center" />
+            android:text="@string/call"
+            android:textAlignment="center"
+            app:drawableTopCompat="@drawable/ic_baseline_phone_24" />
 
         <TextView
             android:id="@+id/detailTextLike"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:drawableTop="@drawable/ic_baseline_star_like_24"
-            android:text="LIKE"
-            android:textAlignment="center" />
+            android:text="@string/like"
+            android:textAlignment="center"
+            app:drawableTopCompat="@drawable/ic_baseline_star_like_24" />
 
         <TextView
             android:id="@+id/detailWebsite"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:drawableTop="@drawable/ic_baseline_public_24"
-            android:text="WEBSITE"
-            android:textAlignment="center" />
+            android:text="@string/website"
+            android:textAlignment="center"
+            app:drawableTopCompat="@drawable/ic_baseline_public_24" />
     </LinearLayout>
 
     <View

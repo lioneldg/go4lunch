@@ -1,39 +1,30 @@
 package com.example.go4lunch.ui;
+
 import static com.example.go4lunch.BuildConfig.MAPS_API_KEY;
-import static java.lang.Thread.sleep;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.fragment.app.Fragment;
 
-import com.example.go4lunch.DI.DI;
+import com.example.go4lunch.di.DI;
 import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.FragmentMapBinding;
 import com.example.go4lunch.models.NearbySearchResult;
 import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
-
 import com.example.go4lunch.tools.UrlRequest;
 import com.example.go4lunch.tools.VectorToBitmap;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -44,11 +35,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.snackbar.Snackbar;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -63,8 +54,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private FusedLocationProviderClient fusedLocationProviderClient;
     private static final int DEFAULT_ZOOM = 15;
     private GoogleMap googleMap;
-    private ArrayList<String> placesIds;
-    private SupportMapFragment mapFragment;
     private final InterfaceSearchResultApiService service = DI.getSearchResultApiService();
     private Set<String> restIdSet;
     private static ClickListener itemListener;
@@ -84,8 +73,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         super.onResume();
         prepareRestIdSet();
         // Construct a FusedLocationProviderClient.
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
-        mapFragment = SupportMapFragment.newInstance();
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+        SupportMapFragment mapFragment = SupportMapFragment.newInstance();
         //register the onMapReady callback method
         mapFragment.getMapAsync(this);
         //add map fragment to current view
@@ -153,7 +142,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         try {
             if (googleMap != null && locationPermissionGranted) {
                 Task<Location> locationResult = fusedLocationProviderClient.getLastLocation();
-                    locationResult.addOnCompleteListener(getActivity(), task -> {
+                    locationResult.addOnCompleteListener(requireActivity(), task -> {
                         if (task.isSuccessful()) {
                             lastKnownLocation = task.getResult();
                             service.setLastKnownLocation(lastKnownLocation);
@@ -172,7 +161,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
     protected void placeSearchNearBy(double lat, double lng){
-        placesIds = new ArrayList<String>();
         String placesSearchStr = "https://maps.googleapis.com/maps/api/place/nearbysearch/" +
                 "json?location="+lat+","+lng+
                 "&rankby=distance"+
@@ -189,53 +177,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         executor.execute(() -> {
             if(service.getNearbySearchResults().size() == 0) {
                 String urlRequestResult = UrlRequest.execute(url);
-                try {
-                    //parse results to JSON + add each result to searchResultArrayList
-                    JSONObject resultObject = new JSONObject(urlRequestResult);
-                    JSONArray placesArray = resultObject.getJSONArray("results");
-                    for (int i = 0; placesArray.length() > i; i++) {
-                        NearbySearchResult nearbySearchResult = new NearbySearchResult();
-
-                        JSONObject place = new JSONObject(placesArray.get(i).toString());
-                        String name = place.getString("name");
-                        String address = place.getString("vicinity");
-                        String place_id = place.getString("place_id");
-                        int rating = (int) Math.round((place.getDouble("rating") / 5) * 3);
-                        JSONObject geometry = place.getJSONObject("geometry");
-                        JSONObject location = geometry.getJSONObject("location");
-                        Double lat = location.getDouble("lat");
-                        Double lng = location.getDouble("lng");
-
-                        JSONObject opening_hours = place.getJSONObject("opening_hours");
-                        boolean open_now = opening_hours.getBoolean("open_now");
-
-                        JSONObject photos = new JSONObject(place.getJSONArray("photos").get(0).toString());
-                        String photoRef = photos.getString("photo_reference");
-
-                        float[] distanceBetweenArray = new float[1];
-                        Location.distanceBetween(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude(), lat, lng, distanceBetweenArray);
-                        int distanceBetween = Math.round(distanceBetweenArray[0]);
-
-                        nearbySearchResult.setName(name);
-                        nearbySearchResult.setVicinity(address);
-                        nearbySearchResult.setPlace_id(place_id);
-                        nearbySearchResult.setRating(rating);
-                        nearbySearchResult.setLat(lat);
-                        nearbySearchResult.setLng(lng);
-                        nearbySearchResult.setOpen_now(open_now);
-                        nearbySearchResult.setPhoto_reference(photoRef);
-                        nearbySearchResult.setDistanceBetween(distanceBetween);
-                        service.addNearbySearchResult(nearbySearchResult);
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                addNearBySearchResult(urlRequestResult);
             }
         });
         try {
             executor.shutdown();
-            executor.awaitTermination(1, TimeUnit.SECONDS);
+            executor.awaitTermination(4, TimeUnit.SECONDS);
              if(this.isVisible()){
                 for (int i = 0; service.getNearbySearchResults().size() > i; i++) {
                     NearbySearchResult nearbySearchResult = service.getNearbySearchResults().get(i);
@@ -251,11 +198,57 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    private void addNearBySearchResult(String urlRequestResult){
+        try {
+        //parse results to JSON + add each result to searchResultArrayList
+        JSONObject resultObject = new JSONObject(urlRequestResult);
+        JSONArray placesArray = resultObject.getJSONArray("results");
+        for (int i = 0; placesArray.length() > i; i++) {
+            NearbySearchResult nearbySearchResult = new NearbySearchResult();
+
+            JSONObject place = new JSONObject(placesArray.get(i).toString());
+            String name = place.optString("name");
+            String address = place.optString("vicinity");
+            String place_id = place.getString("place_id");
+            int rating = (int) Math.round(place.optDouble("rating") / 5 * 3);
+            JSONObject geometry = place.getJSONObject("geometry");
+            JSONObject location = geometry.getJSONObject("location");
+            double lat = location.getDouble("lat");
+            double lng = location.getDouble("lng");
+
+            JSONObject opening_hours = place.optJSONObject("opening_hours");
+            boolean open_now = opening_hours != null && opening_hours.getBoolean("open_now");
+
+            JSONArray _photos =  place.optJSONArray("photos");
+            JSONObject photos = _photos != null ? _photos.getJSONObject(0) : null;
+            String photoRef = photos != null ? photos.optString("photo_reference") : null;
+
+            float[] distanceBetweenArray = new float[1];
+            Location.distanceBetween(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude(), lat, lng, distanceBetweenArray);
+            int distanceBetween = Math.round(distanceBetweenArray[0]);
+
+            nearbySearchResult.setName(name);
+            nearbySearchResult.setVicinity(address);
+            nearbySearchResult.setPlace_id(place_id);
+            nearbySearchResult.setRating(rating);
+            nearbySearchResult.setLat(lat);
+            nearbySearchResult.setLng(lng);
+            nearbySearchResult.setOpen_now(open_now);
+            nearbySearchResult.setPhoto_reference(photoRef);
+            nearbySearchResult.setDistanceBetween(distanceBetween);
+            service.addNearbySearchResult(nearbySearchResult);
+        }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     protected void addMarkerOption(LatLng position, String title, String placeId){
         Marker marker = googleMap.addMarker(new MarkerOptions()
                 .position(position)
                 .title(title)
                 .icon(VectorToBitmap.convert(getResources(), R.drawable.ic_baseline_restaurant_24, restIdSet.contains(placeId))));
+        assert marker != null;
         marker.setTag(placeId);
     }
 
@@ -270,6 +263,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
     public interface ClickListener {
-        public void listClicked(String spotId);
+        void listClicked(String spotId);
     }
 }

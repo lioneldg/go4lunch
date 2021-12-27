@@ -18,16 +18,16 @@ import com.example.go4lunch.models.User;
 import java.util.ArrayList;
 
 public class WorkmateListAdapter extends RecyclerView.Adapter<WorkmateListAdapter.WorkmateListViewHolder> {
-    private ArrayList<User> workmateList;
-    private Context context;
-    private Boolean isFromAllWorkmates;
+    private final ArrayList<User> workmateList;
+    private final Context context;
+    private final Boolean isFromAllWorkmates;
     private static ClickListener itemListener;
 
     public WorkmateListAdapter(ArrayList<User> list, Context c, Boolean fromAllWorkmates, ClickListener itemListener) {
         workmateList = list;
         context = c;
         isFromAllWorkmates = fromAllWorkmates;
-        this.itemListener = itemListener;
+        WorkmateListAdapter.itemListener = itemListener;
     }
     public WorkmateListAdapter(ArrayList<User> list, Context c, Boolean fromAllWorkmates) {
         workmateList = list;
@@ -61,11 +61,9 @@ public class WorkmateListAdapter extends RecyclerView.Adapter<WorkmateListAdapte
 
         public WorkmateListViewHolder(final View itemView, ClickListener itemListener) {
             super(itemView);
-            photo = (ImageView) itemView.findViewById(R.id.profilePicture);
-            text = ((TextView) itemView.findViewById(R.id.workmateListCellText));
-            itemView.setOnClickListener(view -> {
-                itemListener.listClicked(spotId);
-            });
+            photo = itemView.findViewById(R.id.profilePicture);
+            text = itemView.findViewById(R.id.workmateListCellText);
+            itemView.setOnClickListener(view -> itemListener.listClicked(spotId));
         }
 
         public void display(User user, Context context, Boolean isFromAllWorkmates) {
@@ -73,13 +71,13 @@ public class WorkmateListAdapter extends RecyclerView.Adapter<WorkmateListAdapte
             Glide.with(context).load(user.getUrlPicture())
                     .apply(RequestOptions.circleCropTransform())
                     .into(photo);
-            String textToPrint = user.getUsername() + (isFromAllWorkmates? (user.getRestaurantName().equals("") ? " hasn't decided yet" : " is eating at " + user.getRestaurantName()) :  " is joining!");
+            String textToPrint = user.getUsername() + (isFromAllWorkmates? (user.getRestaurantName().equals("") ? " " + context.getString(R.string.hasn_t_decided_yet) : " " + context.getString(R.string.is_eating_at) + " " + user.getRestaurantName()) :  " " + context.getString(R.string.is_joining));
             text.setText(textToPrint);
         }
     }
 
     public interface ClickListener {
-        public void listClicked(String spotId);
+        void listClicked(String spotId);
     }
 
 }
