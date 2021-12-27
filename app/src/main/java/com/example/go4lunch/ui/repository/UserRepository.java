@@ -116,7 +116,8 @@ public final class UserRepository {
                 for (DocumentSnapshot workMate: queryDocumentSnapshots) {
                     String uid = Objects.requireNonNull(workMate.get("uid")).toString();
                     String userName = Objects.requireNonNull(workMate.get("username")).toString();
-                    String urlPicture = Objects.requireNonNull(workMate.get("urlPicture")).toString();
+                    Object urlPictureObject = workMate.get("urlPicture");
+                    String urlPicture = urlPictureObject != null ? urlPictureObject.toString() : null;
                     workmateList.add(new User(uid, userName, urlPicture, restName, restId));
                 }
                 mutableLiveDataWorkmateList.setValue(workmateList);
@@ -137,7 +138,8 @@ public final class UserRepository {
                 String restName =  Objects.requireNonNull(users.get("rest_name")).toString();
                 String userId = Objects.requireNonNull(users.get("user_id")).toString();
                 String userName = Objects.requireNonNull(users.get("user_name")).toString();
-                String urlPicture = Objects.requireNonNull(users.get("url_picture")).toString();
+                Object urlPictureObject = users.get("url_picture");
+                String urlPicture = urlPictureObject != null ? urlPictureObject.toString() : null;
                 mutableLiveDataWorkmateList.setValue(new String[]{restId, restName, userId, userName, urlPicture});
             }
         });
