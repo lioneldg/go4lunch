@@ -23,6 +23,7 @@ import com.example.go4lunch.service.InterfaceSearchResultApiService;
 import com.example.go4lunch.tools.PhotoRefToBitmap;
 import com.example.go4lunch.ui.manager.UserManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 
@@ -135,18 +136,25 @@ public class SpotDetailActivity extends AppCompatActivity {
         });
 
         call.setOnClickListener(view->{
-            if(!detailSearchResult.getPhone().equals(" ")) {
+            if(!detailSearchResult.getPhone().equals("")) {
                 Uri telephone = Uri.parse("tel:" + detailSearchResult.getPhone());
                 startActivity(new Intent(Intent.ACTION_DIAL, telephone));
+            } else {
+                Snackbar.make(binding.getRoot(), getString(R.string.no_tel), Snackbar.LENGTH_SHORT).show();
             }
         });
 
-        like.setOnClickListener(view -> userManager.sendLike(detailSearchResult.getPlace_id(), detailSearchResult.getName()));
+        like.setOnClickListener(view -> {
+            userManager.sendLike(detailSearchResult.getPlace_id(), detailSearchResult.getName());
+            Snackbar.make(binding.getRoot(), getString(R.string.like_sent), Snackbar.LENGTH_SHORT).show();
+        });
 
         website.setOnClickListener(view -> {
-            if(!detailSearchResult.getWebsite().equals(" ")) {
+            if(!detailSearchResult.getWebsite().equals("")) {
                 Uri web = Uri.parse(detailSearchResult.getWebsite());
                 startActivity(new Intent(Intent.ACTION_VIEW, web));
+            } else {
+                Snackbar.make(binding.getRoot(), getString(R.string.no_web_site), Snackbar.LENGTH_SHORT).show();
             }
         });
     }

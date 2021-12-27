@@ -20,4 +20,7 @@
     <string name="hasn_t_decided_yet">n\'a pas encore décidé</string>
     <string name="is_eating_at">mange à</string>
     <string name="is_joining">sera présent !</string>
+    <string name="no_web_site">Pas de site web disponible</string>
+    <string name="no_tel">Pas de numéro de téléphone disponible</string>
+    <string name="like_sent">Like envoyé</string>
 </resources>

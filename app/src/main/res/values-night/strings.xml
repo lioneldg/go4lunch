@@ -25,4 +25,5 @@
     <string name="available_workmates">Available workmates</string>
     <string name="hasn_t_decided_yet">hasn\'t decided yet</string>
     <string name="is_joining">is joining!</string>
+    <string name="no_web_site">No available web site</string>
 </resources>

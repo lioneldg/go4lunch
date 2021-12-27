@@ -35,4 +35,7 @@
     <string name="hasn_t_decided_yet">hasn\'t decided yet</string>
     <string name="is_eating_at">is eating at</string>
     <string name="is_joining">is joining!</string>
+    <string name="no_web_site">No available web site</string>
+    <string name="no_tel">No available phone number</string>
+    <string name="like_sent">Like sent</string>
 </resources>
