@@ -59,6 +59,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private static ClickListener itemListener;
     private View view;
     protected SpotsFragment spotsFragment;
+    private SupportMapFragment mapFragment;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentMapBinding.inflate(inflater, container, false);
@@ -74,9 +75,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         prepareRestIdSet();
         // Construct a FusedLocationProviderClient.
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity());
-        SupportMapFragment mapFragment = SupportMapFragment.newInstance();
-        //register the onMapReady callback method
-        mapFragment.getMapAsync(this);
+
+        mapFragment = SupportMapFragment.newInstance();
+
+        getLocationPermission();
+
         //add map fragment to current view
         getParentFragmentManager().beginTransaction().replace(view.getId(), mapFragment).commit();
     }
@@ -99,13 +102,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             itemListener.listClicked(placeId);
             return false;
         });
-        getLocationPermission();
+       updateLocationUI();
     }
 
     private void getLocationPermission() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationPermissionGranted = true;
-            updateLocationUI();
+            //register the onMapReady callback method
+            mapFragment.getMapAsync(this);
         } else {
             requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         }
@@ -114,7 +118,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
         if (isGranted) {
             locationPermissionGranted = true;
-            updateLocationUI();
+            //register the onMapReady callback method
+            mapFragment.getMapAsync(this);
         }
     });
 
@@ -149,6 +154,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                             if (lastKnownLocation != null) {
                                 googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude()), DEFAULT_ZOOM));
                                 placeSearchNearBy(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+                            } else {
+                                getDeviceLocation();
                             }
                         } else {
                             googleMap.getUiSettings().setMyLocationButtonEnabled(false);
@@ -191,7 +198,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 }
             }
              if(spotsFragment != null && spotsFragment.isVisible()){
-                 spotsFragment.onDataSetChange();//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                 spotsFragment.onDataSetChange();
              }
         } catch (InterruptedException e) {
             e.printStackTrace();
