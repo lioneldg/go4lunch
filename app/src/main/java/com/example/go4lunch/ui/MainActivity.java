@@ -211,8 +211,8 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
     private void setTextUserData(FirebaseUser user){
 
         //Get email & username from User
-        String email = TextUtils.isEmpty(user.getEmail()) ? "No mail found" : user.getEmail();
-        String username = TextUtils.isEmpty(user.getDisplayName()) ? "No username found" : user.getDisplayName();
+        String email = TextUtils.isEmpty(user.getEmail()) ? "" : user.getEmail();
+        String username = TextUtils.isEmpty(user.getDisplayName()) ? "" : user.getDisplayName();
 
         //Update views with data
         TextView title = binding.navigationView.getHeaderView(0).findViewById(R.id.firstAndLastName);
