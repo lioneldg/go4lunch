@@ -51,13 +51,13 @@ public class UserManager extends ViewModel {
         return userRepository.signOut(context);
     }
 
-    public void addWorkmate(String restId, String name) { userRepository.addWorkmate(restId, name); }
+    public void addWorkmate(String restId, String name, String vicinity) { userRepository.addWorkmate(restId, name, vicinity); }
 
     public void delWorkmate(String restId) { userRepository.delWorkmate(restId); }
 
     public void sendLike(String restId, String restaurantName) {userRepository.sendLike(restId, restaurantName);}
 
-    public MutableLiveData<ArrayList<User>> getWorkmatesList(String restId, String restName) { return userRepository.getWorkmatesList(restId, restName); }
+    public MutableLiveData<ArrayList<User>> getWorkmatesList(String restId, String restName, String restAddress) { return userRepository.getWorkmatesList(restId, restName, restAddress); }
 
     public MutableLiveData<String[]> getWorkmatesListEveryWhere() { return userRepository.getWorkmatesListEveryWhere(); }
 

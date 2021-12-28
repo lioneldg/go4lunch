@@ -38,4 +38,9 @@
     <string name="no_web_site">No available web site</string>
     <string name="no_tel">No available phone number</string>
     <string name="like_sent">Like sent</string>
+    <string name="default_notification_channel_id">326</string>
+    <string name="you_eat_with">There will be :</string>
+    <string name="you_eat_alone">You will be alone</string>
+    <string name="you_eat_to">"You eat to "</string>
+    <string name="located_to">"Located to "</string>
 </resources>

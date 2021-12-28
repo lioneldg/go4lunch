@@ -9,15 +9,17 @@ public class User {
     @Nullable
     private String urlPicture;
     private String restaurantName;
+    private String restaurantAddress;
     private String restaurantId;
 
     public User() { }
 
-    public User(String uid, String username, @Nullable String urlPicture, String restName, String restId) {
+    public User(String uid, String username, @Nullable String urlPicture, String restName, String restAddress, String restId) {
         this.uid = uid;
         this.username = username;
         this.urlPicture = urlPicture;
         this.restaurantName = restName;
+        this.restaurantAddress = restAddress;
         this.restaurantId = restId;
     }
 
@@ -32,4 +34,5 @@ public class User {
     // --- SETTERS ---
     public void setRestaurantName(String restName) { this.restaurantName = restName; }
     public void setRestaurantId(String restId) { this.restaurantId = restId; }
+    public String getRestaurantAddress() { return restaurantAddress; }
 }

@@ -4,6 +4,7 @@ import static com.example.go4lunch.BuildConfig.MAPS_API_KEY;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,7 +12,9 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.SearchView;
 import android.widget.TextView;
 
@@ -70,6 +73,10 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
+        FrameLayout mainFrameLayout = binding.mainFrameLayout;
+
+        int orientation = getResources().getConfiguration().orientation;
+        mainFrameLayout.setLayoutParams(new LinearLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT, orientation == Configuration.ORIENTATION_LANDSCAPE ? 1.5f : 1.0f));
         setContentView(binding.getRoot());
 
         fm = getSupportFragmentManager();
@@ -388,8 +395,9 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
             String userId = workmateListObserved[2];
             String userName = workmateListObserved[3];
             String urlPicture = workmateListObserved[4];
+            String restAddress = workmateListObserved[5];
             if(!userId.equals("")) {
-                service.addWorkmatesList(new User(userId, userName, urlPicture, restName, restId));
+                service.addWorkmatesList(new User(userId, userName, urlPicture, restName, restAddress, restId));
             }
         };
 

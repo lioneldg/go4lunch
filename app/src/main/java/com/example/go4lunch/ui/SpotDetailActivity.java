@@ -1,10 +1,12 @@
 package com.example.go4lunch.ui;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -14,9 +16,9 @@ import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.go4lunch.di.DI;
 import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.ActivitySpotDetailBinding;
+import com.example.go4lunch.di.DI;
 import com.example.go4lunch.models.DetailSearchResult;
 import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
@@ -38,7 +40,11 @@ public class SpotDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        com.example.go4lunch.databinding.ActivitySpotDetailBinding binding = ActivitySpotDetailBinding.inflate(getLayoutInflater());
+        ActivitySpotDetailBinding binding = ActivitySpotDetailBinding.inflate(getLayoutInflater());
+        ImageView detailImage = binding.detailImage;
+        int orientation = getResources().getConfiguration().orientation;
+        detailImage.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, orientation == Configuration.ORIENTATION_LANDSCAPE ? 300 : 900));
+
         setContentView(binding.getRoot());
 
         ImageView image = binding.detailImage;
@@ -93,7 +99,7 @@ public class SpotDetailActivity extends AppCompatActivity {
             fab.setImageResource(hasDecided ? R.drawable.ic_baseline_clear_24 : R.drawable.ic_baseline_check_24);
             recyclerView.setAdapter(new WorkmateListAdapter(workmateList, getApplicationContext(), false));
         };
-        userManager.getWorkmatesList(detailSearchResult.getPlace_id(), detailSearchResult.getName()).observe(this, workmateListObserver);
+        userManager.getWorkmatesList(detailSearchResult.getPlace_id(), detailSearchResult.getName(), detailSearchResult.getVicinity()).observe(this, workmateListObserver);
 
         fab.setOnClickListener(view -> {
             ArrayList<User> workmates = service.getWorkmatesList();
@@ -122,7 +128,7 @@ public class SpotDetailActivity extends AppCompatActivity {
                         break;
                     }
                 }
-                userManager.addWorkmate(detailSearchResult.getPlace_id(), detailSearchResult.getName());
+                userManager.addWorkmate(detailSearchResult.getPlace_id(), detailSearchResult.getName(), detailSearchResult.getVicinity());
                 fab.setImageResource(R.drawable.ic_baseline_clear_24);
                 hasDecided=true;
             }
@@ -131,7 +137,7 @@ public class SpotDetailActivity extends AppCompatActivity {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            userManager.getWorkmatesList(detailSearchResult.getPlace_id(), detailSearchResult.getName()).observe(this, workmateListObserver);
+            userManager.getWorkmatesList(detailSearchResult.getPlace_id(), detailSearchResult.getName(), detailSearchResult.getVicinity()).observe(this, workmateListObserver);
             setAllWorkmates();
         });
 
@@ -167,8 +173,9 @@ public class SpotDetailActivity extends AppCompatActivity {
             String userId = workmateListObserved[2];
             String userName = workmateListObserved[3];
             String urlPicture = workmateListObserved[4];
+            String restAddress = workmateListObserved[5];
             if(!userId.equals("")) {
-                service.addWorkmatesList(new User(userId, userName, urlPicture, restName, restId));
+                service.addWorkmatesList(new User(userId, userName, urlPicture, restName, restAddress, restId));
             }
         };
 

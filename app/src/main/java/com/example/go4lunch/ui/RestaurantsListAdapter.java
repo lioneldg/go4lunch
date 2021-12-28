@@ -88,7 +88,7 @@ public class RestaurantsListAdapter extends RecyclerView.Adapter<RestaurantsList
                 String workmatesNumberStr = "(" + workmateList.size() + ")";
                         workmatesNumber.setText(workmatesNumberStr);
             };
-            userManager.getWorkmatesList(placeId, nearbySearchResult.getName()).observe((LifecycleOwner) context, workmateListObserver);
+            userManager.getWorkmatesList(placeId, nearbySearchResult.getName(), nearbySearchResult.getVicinity()).observe((LifecycleOwner) context, workmateListObserver);
 
             title.setText(nearbySearchResult.getName());
             address.setText(nearbySearchResult.getVicinity());

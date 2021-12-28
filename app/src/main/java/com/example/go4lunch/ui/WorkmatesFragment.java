@@ -52,8 +52,9 @@ public class WorkmatesFragment extends Fragment {
             String userId = workmateListObserved[2];
             String userName = workmateListObserved[3];
             String urlPicture = workmateListObserved[4];
+            String restAddress = workmateListObserved[5];
             if(!userId.equals("")) {
-                service.addWorkmatesList(new User(userId, userName, urlPicture, restName, restId));
+                service.addWorkmatesList(new User(userId, userName, urlPicture, restName, restAddress, restId));
             }
             rv.setAdapter(new WorkmateListAdapter(service.getWorkmatesList(), getContext(), true, (WorkmateListAdapter.ClickListener) getActivity()));
         };

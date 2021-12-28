@@ -68,20 +68,20 @@ public final class UserRepository {
     }
 
     // Create restaurant in Firestore if needed and add myself as workmate
-    private User createWorkmate(String restaurantId, String restaurantName) {
+    private User createWorkmate(String restaurantId, String restaurantName, String restAddress) {
         FirebaseUser user = getCurrentUser();
         if(user != null){
             String urlPicture = (user.getPhotoUrl() != null) ? user.getPhotoUrl().toString() : null;
             String username = user.getDisplayName();
             String uid = user.getUid();
-            return new User(uid, username, urlPicture, restaurantName, restaurantId);
+            return new User(uid, username, urlPicture, restaurantName, restaurantId, restAddress);
         } else{
             return null;
         }
     }
 
-    public void addWorkmate(String restId, String restaurantName) {
-        User userToCreate = createWorkmate(restId, restaurantName);
+    public void addWorkmate(String restId, String restaurantName, String vicinity) {
+        User userToCreate = createWorkmate(restId, restaurantName, vicinity);
         Map<String, Object> restaurant = new HashMap<>();
         restaurant.put("id", restId);
         restaurant.put("name", restaurantName);
@@ -94,6 +94,7 @@ public final class UserRepository {
         user.put("rest_name", restaurantName);
         user.put("user_name", userToCreate.getUsername());
         user.put("url_picture", userToCreate.getUrlPicture());
+        user.put("rest_address", vicinity);
         this.getUsersCollection().document(userToCreate.getUid()).set(user);
     }
 
@@ -108,7 +109,7 @@ public final class UserRepository {
     }
 
     // Get workmates in restaurant
-    public MutableLiveData<ArrayList<User>> getWorkmatesList(String restId, String restName){
+    public MutableLiveData<ArrayList<User>> getWorkmatesList(String restId, String restName, String restAddress){
         if(restId != null){
             MutableLiveData<ArrayList<User>> mutableLiveDataWorkmateList = new MutableLiveData<>();
             this.getRestaurantsCollection().document(restId).collection("workmates").get().addOnSuccessListener(queryDocumentSnapshots -> {
@@ -118,7 +119,7 @@ public final class UserRepository {
                     String userName = Objects.requireNonNull(workMate.get("username")).toString();
                     Object urlPictureObject = workMate.get("urlPicture");
                     String urlPicture = urlPictureObject != null ? urlPictureObject.toString() : null;
-                    workmateList.add(new User(uid, userName, urlPicture, restName, restId));
+                    workmateList.add(new User(uid, userName, urlPicture, restName, restAddress, restId));
                 }
                 mutableLiveDataWorkmateList.setValue(workmateList);
             });
@@ -140,7 +141,8 @@ public final class UserRepository {
                 String userName = Objects.requireNonNull(users.get("user_name")).toString();
                 Object urlPictureObject = users.get("url_picture");
                 String urlPicture = urlPictureObject != null ? urlPictureObject.toString() : null;
-                mutableLiveDataWorkmateList.setValue(new String[]{restId, restName, userId, userName, urlPicture});
+                String restAddress = Objects.requireNonNull(users.get("rest_address")).toString();
+                mutableLiveDataWorkmateList.setValue(new String[]{restId, restName, userId, userName, urlPicture, restAddress});
             }
         });
         return mutableLiveDataWorkmateList;

@@ -17,7 +17,6 @@ public class SpotsFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentSpotsBinding.inflate(inflater, container, false);
-
         rv = binding.list;
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         return binding.getRoot();
