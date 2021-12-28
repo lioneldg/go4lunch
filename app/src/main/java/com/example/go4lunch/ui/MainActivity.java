@@ -41,6 +41,7 @@ import com.example.go4lunch.ui.manager.UserManager;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -100,7 +101,22 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         MenuItem yourLunch = binding.navigationView.getMenu().findItem(R.id.your_lunch);
         MenuItem settings = binding.navigationView.getMenu().findItem(R.id.settings);
         MenuItem logout = binding.navigationView.getMenu().findItem(R.id.logout);
-        yourLunch.setOnMenuItemClickListener(menuItem -> false);
+        yourLunch.setOnMenuItemClickListener(menuItem -> {
+            ArrayList<User> workmates = service.getWorkmatesList();
+            for (int i = 0; i < workmates.size(); i++) {
+                boolean isMe = workmates.get(i).getUid().equals(userManager.getCurrentUser().getUid());
+                if(isMe){
+                    String myRestId = workmates.get(i).getRestaurantId();
+                    if(myRestId.equals("")){
+                        Snackbar.make(binding.getRoot(), getString(R.string.hasn_t_decided_yet), Snackbar.LENGTH_SHORT).show();
+                    } else {
+                        placeSearchExecutor(myRestId, false, true);
+                    }
+                    break;
+                }
+            }
+            return false;
+        });
 
         settings.setOnMenuItemClickListener(menuItem -> false);
 
@@ -224,7 +240,9 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
 
     @Override
     public void listClicked(String spotId) {
-        placeSearchExecutor(spotId, false, true);
+        if(!spotId.equals("")){
+            placeSearchExecutor(spotId, false, true);
+        }
     }
 
     private void placeSearchExecutor(String spotId, boolean isFromAutoComplete, boolean isSearchFinished){
