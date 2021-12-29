@@ -61,4 +61,8 @@ public class UserManager extends ViewModel {
 
     public MutableLiveData<String[]> getWorkmatesListEveryWhere() { return userRepository.getWorkmatesListEveryWhere(); }
 
+    public MutableLiveData<Boolean> getReceiveNotifications() { return userRepository.getReceiveNotifications(); }
+
+    public void setReceiveNotifications(boolean receive) { userRepository.setReceiveNotifications(receive); }
+
 }

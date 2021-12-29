@@ -13,6 +13,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -95,6 +96,7 @@ public final class UserRepository {
         user.put("user_name", userToCreate.getUsername());
         user.put("url_picture", userToCreate.getUrlPicture());
         user.put("rest_address", vicinity);
+        user.put("receive_notifications", "true");
         this.getUsersCollection().document(userToCreate.getUid()).set(user);
     }
 
@@ -146,5 +148,29 @@ public final class UserRepository {
             }
         });
         return mutableLiveDataWorkmateList;
+    }
+
+    // Get receive_notifications
+    public MutableLiveData<Boolean> getReceiveNotifications(){
+        MutableLiveData<Boolean> mutableLiveDataWorkmateList = new MutableLiveData<>();
+        this.getUsersCollection().get().addOnSuccessListener(usersListSnapshots -> {
+            List<DocumentSnapshot> queryDocumentSnapshots = usersListSnapshots.getDocuments();
+            String currentUserId = Objects.requireNonNull(getCurrentUser()).getUid();
+            for (DocumentSnapshot users: queryDocumentSnapshots) {
+                String userId = Objects.requireNonNull(users.get("user_id")).toString();
+                String receiveNotifications = Objects.requireNonNull(users.get("receive_notifications")).toString();
+                if(currentUserId.equals(userId)) {
+                    mutableLiveDataWorkmateList.setValue(receiveNotifications.equals("true"));
+                    break;
+                }
+            }
+        });
+        return mutableLiveDataWorkmateList;
+    }
+
+    // Set receive_notifications
+    public void setReceiveNotifications(boolean receive) {
+        DocumentReference docRef = this.getUsersCollection().document(Objects.requireNonNull(getCurrentUser()).getUid());
+        docRef.update("receive_notifications", receive ? "true" : "false");
     }
 }

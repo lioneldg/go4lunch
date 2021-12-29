@@ -15,6 +15,7 @@ public class SearchResultApiService implements  InterfaceSearchResultApiService{
     private ArrayList<User> workmatesList = new ArrayList<>();
     private ArrayList<Restaurant> autocompleteList = new ArrayList<>();
     private Location lastKnownLocation = null;
+    private boolean receiveNotifications = false;
 
     @Override
     public List<NearbySearchResult> getNearbySearchResults() {
@@ -73,5 +74,15 @@ public class SearchResultApiService implements  InterfaceSearchResultApiService{
     @Override
     public Location getLastKnowLocation() {
         return lastKnownLocation;
+    }
+
+    @Override
+    public void setReceiveNotifications(boolean receive) {
+        receiveNotifications = receive;
+    }
+
+    @Override
+    public boolean getReceiveNotifications() {
+        return receiveNotifications;
     }
 }

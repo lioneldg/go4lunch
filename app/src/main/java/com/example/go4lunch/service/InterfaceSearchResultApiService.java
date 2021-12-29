@@ -25,4 +25,6 @@ public interface InterfaceSearchResultApiService {
     void clearAutoCompleteList();
     void setLastKnownLocation(Location location);
     Location getLastKnowLocation();
+    void setReceiveNotifications(boolean receive);
+    boolean getReceiveNotifications();
 }

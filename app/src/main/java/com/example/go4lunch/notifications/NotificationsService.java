@@ -28,7 +28,8 @@ public class NotificationsService extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
-        if (remoteMessage.getNotification() != null) {
+        boolean receiveNotifications = service.getReceiveNotifications();
+        if (remoteMessage.getNotification() != null && receiveNotifications) {
             // Get message sent by Firebase
             sendVisualNotification();
         }

@@ -214,6 +214,7 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             changeFragment(mapFragment);
             updateUIWithUserData(user);
+            getReceiveNotifications();
         } else {
             signIn();
         }
@@ -406,5 +407,10 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         };
 
         userManager.getWorkmatesListEveryWhere().observe(this, workmateListEveryWhereObserver);
+    }
+
+    private void getReceiveNotifications() {
+        final Observer<Boolean> getReceiveNotificationsObserver = service::setReceiveNotifications;
+        userManager.getReceiveNotifications().observe(this, getReceiveNotificationsObserver);
     }
 }
