@@ -31,4 +31,6 @@
     <string name="you_eat_alone">You will be alone</string>
     <string name="you_eat_to">You eat to</string>
     <string name="located_to">"Located to "</string>
+    <string name="notifications">Notifications</string>
+    <string name="receive_notifications">Receive notifications</string>
 </resources>

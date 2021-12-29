@@ -125,7 +125,11 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
             return false;
         });
 
-        settings.setOnMenuItemClickListener(menuItem -> false);
+        settings.setOnMenuItemClickListener(menuItem -> {
+            Intent settingsIntent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(settingsIntent);
+            return false;
+        });
 
         logout.setOnMenuItemClickListener(menuItem -> {
                    userManager.signOut(getApplicationContext()).addOnSuccessListener(task -> signIn());

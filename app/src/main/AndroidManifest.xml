@@ -32,6 +32,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.SpotDetailActivity"/>
+        <activity android:name=".ui.SettingsActivity"/>
         <!-- NOTIFICATION SERVICE -->
         <service
             android:name=".notifications.NotificationsService"

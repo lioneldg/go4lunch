@@ -28,4 +28,6 @@
     <string name="you_eat_alone">Vous serez seul</string>
     <string name="you_eat_to">"Vous mangez à "</string>
     <string name="located_to">"Situé au "</string>
+    <string name="notifications">Notifications</string>
+    <string name="receive_notifications">Recevoir les notifications</string>
 </resources>

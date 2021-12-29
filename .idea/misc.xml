@@ -18,6 +18,7 @@
         <entry key="app/src/main/res/drawable/ic_baseline_star_like_24.xml" value="0.33958333333333335" />
         <entry key="app/src/main/res/drawable/ic_baseline_view_list_24.xml" value="0.33958333333333335" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/activity_settings.xml" value="0.26393110435663625" />
         <entry key="app/src/main/res/layout/activity_spot_detail.xml" value="0.25" />
         <entry key="app/src/main/res/layout/fragment_spot_list_cell.xml" value="0.384963768115942" />
         <entry key="app/src/main/res/layout/fragment_spots.xml" value="0.5458333333333333" />
