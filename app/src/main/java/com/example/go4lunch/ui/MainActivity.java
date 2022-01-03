@@ -84,19 +84,11 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         spotsFragment = new SpotsFragment();
         workmatesFragment = new WorkmatesFragment();
 
-        //set search bar layout
-        setSupportActionBar(binding.toolbar);
-        //set drawer menu
-        setDrawer();
-        //set bottom bar
-        setNavigationListener();
-        userManager.signOut(getApplicationContext());
         activityResultLauncher = registerForActivityResult(
                 new FirebaseAuthUIActivityResultContract(),
                 this::onSignInResult
         );
         signIn();
-        setAllWorkmates();
     }
 
     private void setDrawer() {
@@ -206,14 +198,29 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
     }
 
     private void signIn() {
-        activityResultLauncher.launch(userManager.signInIntent());
+        if(!userManager.isCurrentUserLogged()){
+            activityResultLauncher.launch(userManager.signInIntent());
+        } else {
+            //set search bar layout
+            setSupportActionBar(binding.toolbar);
+            //set drawer menu
+            setDrawer();
+            //set bottom bar
+            setNavigationListener();
+            setAllWorkmates();
+            getReceiveNotifications();
+        }
     }
 
     private void onSignInResult(FirebaseAuthUIAuthenticationResult result) {
         if (result.getResultCode() == RESULT_OK) {
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-            changeFragment(mapFragment);
-            updateUIWithUserData(user);
+            //set search bar layout
+            setSupportActionBar(binding.toolbar);
+            //set drawer menu
+            setDrawer();
+            //set bottom bar
+            setNavigationListener();
+            setAllWorkmates();
             getReceiveNotifications();
         } else {
             signIn();
@@ -393,6 +400,7 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
     }
 
     private void setAllWorkmates(){
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         service.clearWorkmatesList();
         final Observer<String[]> workmateListEveryWhereObserver = workmateListObserved -> {
             String restId = workmateListObserved[0];
@@ -403,6 +411,8 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
             String restAddress = workmateListObserved[5];
             if(!userId.equals("")) {
                 service.addWorkmatesList(new User(userId, userName, urlPicture, restName, restAddress, restId));
+                updateUIWithUserData(user);
+                changeFragment(mapFragment);
             }
         };
 
