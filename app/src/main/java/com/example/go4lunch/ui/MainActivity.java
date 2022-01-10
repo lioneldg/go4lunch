@@ -31,14 +31,15 @@ import androidx.lifecycle.Observer;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.example.go4lunch.di.DI;
 import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.ActivityMainBinding;
+import com.example.go4lunch.di.DI;
 import com.example.go4lunch.models.DetailSearchResult;
 import com.example.go4lunch.models.NearbySearchResult;
 import com.example.go4lunch.models.Restaurant;
 import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
+import com.example.go4lunch.tools.MainHelper;
 import com.example.go4lunch.tools.UrlRequest;
 import com.example.go4lunch.ui.manager.UserManager;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
@@ -47,10 +48,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -270,52 +267,28 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             String urlRequestResult = UrlRequest.execute(url);
-            JSONObject result = null;
             try {
-                //parse results to JSON + add result to searchResult
-                JSONObject resultObject = new JSONObject(urlRequestResult);
-                result = resultObject.getJSONObject("result");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            try {
-                assert result != null;
-                String _phone = result.optString("formatted_phone_number");
-                String _website = result.optString("website");
-                JSONArray _photos =  result.optJSONArray("photos");
-                JSONObject photos = _photos != null ? _photos.getJSONObject(0) : null;
-                String _photoRef = photos != null ? photos.optString("photo_reference") : null;
-
-                String _name = result.optString("name");
-                String _vicinity = result.optString("vicinity");
-                int _rating = (int) Math.round(result.optDouble("rating") / 5 * 3);
-                JSONObject geometry = result.getJSONObject("geometry");
-                JSONObject location = geometry.getJSONObject("location");
-                double lat = location.getDouble("lat");
-                double lng = location.getDouble("lng");
-                JSONObject opening_hours = result.optJSONObject("opening_hours");
-                boolean open_now = opening_hours != null && opening_hours.getBoolean("open_now");
+                Restaurant spot = MainHelper.placeResultToRestaurant(urlRequestResult, spotId);
                 if(isFromAutoComplete){
                     Location lastKnownLocation = service.getLastKnowLocation();
                     float[] distanceBetweenArray = new float[1];
-                    Location.distanceBetween(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude(), lat, lng, distanceBetweenArray);
+                    Location.distanceBetween(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude(), spot.getLat(), spot.getLng(), distanceBetweenArray);
                     int distanceBetween = Math.round(distanceBetweenArray[0]);
                     if(distanceBetween <= 2000) {
                         NearbySearchResult nearbySearchResult = new NearbySearchResult();
-                        nearbySearchResult.setName(_name);
-                        nearbySearchResult.setVicinity(_vicinity);
+                        nearbySearchResult.setName(spot.getName());
+                        nearbySearchResult.setVicinity(spot.getVicinity());
                         nearbySearchResult.setPlace_id(spotId);
-                        nearbySearchResult.setRating(_rating);
-                        nearbySearchResult.setLat(lat);
-                        nearbySearchResult.setLng(lng);
-                        nearbySearchResult.setOpen_now(open_now);
-                        nearbySearchResult.setPhoto_reference(_photoRef);
+                        nearbySearchResult.setRating(spot.getRating());
+                        nearbySearchResult.setLat(spot.getLat());
+                        nearbySearchResult.setLng(spot.getLng());
+                        nearbySearchResult.setOpen_now(spot.getOpen_now());
+                        nearbySearchResult.setPhoto_reference(spot.getPhoto_reference());
                         nearbySearchResult.setDistanceBetween(distanceBetween);
                         service.addNearbySearchResult(nearbySearchResult);
                     }
                 } else {
-                    service.setDetailSearchResult(new DetailSearchResult(spotId, _name, _photoRef, _rating, _vicinity, _website, _phone));
+                    service.setDetailSearchResult(new DetailSearchResult(spotId, spot.getName(), spot.getPhoto_reference(), spot.getRating(), spot.getVicinity(), spot.getWebsite(), spot.getPhone()));
                     Intent detailIntent = new Intent(MainActivity.this, SpotDetailActivity.class);
                     startActivity(detailIntent);
                 }
@@ -359,26 +332,9 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
             ExecutorService executor = Executors.newSingleThreadExecutor();
             executor.execute(() -> {
                 String urlRequestResult = UrlRequest.execute(url);
-                JSONArray predictions;
-                try {
-                    //parse results to JSON + add result to searchResult
-                    JSONObject predictionsObject = new JSONObject(urlRequestResult);
-                    predictions = predictionsObject.getJSONArray("predictions");
-                    for(int i = 0; i < predictions.length(); i++){
-                        String name;
-                        String placeId;
-                        JSONObject currentPredictions = (JSONObject) predictions.get(i);
-                        JSONArray currentTypesArray = currentPredictions.getJSONArray("types");
-                        for(int j = 0; j < currentTypesArray.length(); j++){
-                            if(currentTypesArray.get(j).equals("restaurant")){
-                                name = currentPredictions.optString("description");
-                                placeId = currentPredictions.getString("place_id");
-                                service.addAutoCompleteList(new Restaurant(placeId, name));
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                ArrayList<Restaurant> restaurantList = MainHelper.placeResultToPredictions(urlRequestResult);
+                for(int i = 0; i < restaurantList.size(); i++){
+                    service.addAutoCompleteList(restaurantList.get(i));
                 }
             });
             try {
