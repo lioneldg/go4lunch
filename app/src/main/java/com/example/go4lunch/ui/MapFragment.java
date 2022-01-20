@@ -17,12 +17,13 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.example.go4lunch.di.DI;
 import com.example.go4lunch.R;
 import com.example.go4lunch.databinding.FragmentMapBinding;
+import com.example.go4lunch.di.DI;
 import com.example.go4lunch.models.NearbySearchResult;
 import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
+import com.example.go4lunch.tools.PlaceSearchHelper;
 import com.example.go4lunch.tools.UrlRequest;
 import com.example.go4lunch.tools.VectorToBitmap;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -37,8 +38,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
 
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -206,47 +205,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void addNearBySearchResult(String urlRequestResult){
-        try {
-        //parse results to JSON + add each result to searchResultArrayList
-        JSONObject resultObject = new JSONObject(urlRequestResult);
-        JSONArray placesArray = resultObject.getJSONArray("results");
-        for (int i = 0; placesArray.length() > i; i++) {
-            NearbySearchResult nearbySearchResult = new NearbySearchResult();
 
-            JSONObject place = new JSONObject(placesArray.get(i).toString());
-            String name = place.optString("name");
-            String address = place.optString("vicinity");
-            String place_id = place.getString("place_id");
-            int rating = (int) Math.round(place.optDouble("rating") / 5 * 3);
-            JSONObject geometry = place.getJSONObject("geometry");
-            JSONObject location = geometry.getJSONObject("location");
-            double lat = location.getDouble("lat");
-            double lng = location.getDouble("lng");
+        float[] distanceBetweenArray = new float[1];
+        double lastLatitude= lastKnownLocation.getLatitude();
+        double lastLongitude = lastKnownLocation.getLongitude();
+        int distanceBetween;
 
-            JSONObject opening_hours = place.optJSONObject("opening_hours");
-            boolean open_now = opening_hours != null && opening_hours.getBoolean("open_now");
-
-            JSONArray _photos =  place.optJSONArray("photos");
-            JSONObject photos = _photos != null ? _photos.getJSONObject(0) : null;
-            String photoRef = photos != null ? photos.optString("photo_reference") : null;
-
-            float[] distanceBetweenArray = new float[1];
-            Location.distanceBetween(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude(), lat, lng, distanceBetweenArray);
-            int distanceBetween = Math.round(distanceBetweenArray[0]);
-
-            nearbySearchResult.setName(name);
-            nearbySearchResult.setVicinity(address);
-            nearbySearchResult.setPlace_id(place_id);
-            nearbySearchResult.setRating(rating);
-            nearbySearchResult.setLat(lat);
-            nearbySearchResult.setLng(lng);
-            nearbySearchResult.setOpen_now(open_now);
-            nearbySearchResult.setPhoto_reference(photoRef);
-            nearbySearchResult.setDistanceBetween(distanceBetween);
-            service.addNearbySearchResult(nearbySearchResult);
-        }
-        } catch (Exception e) {
-            e.printStackTrace();
+        ArrayList<NearbySearchResult> nearbySearchResultArrayList = PlaceSearchHelper.getNearBySearchResult(urlRequestResult);
+        for(int i = 0; i < nearbySearchResultArrayList.size(); i++) {
+            Location.distanceBetween(lastLatitude, lastLongitude, nearbySearchResultArrayList.get(i).getLat(), nearbySearchResultArrayList.get(i).getLng(), distanceBetweenArray);
+            distanceBetween = Math.round(distanceBetweenArray[0]);
+            nearbySearchResultArrayList.get(i).setDistanceBetween(distanceBetween);
+            service.addNearbySearchResult(nearbySearchResultArrayList.get(i));
         }
     }
 

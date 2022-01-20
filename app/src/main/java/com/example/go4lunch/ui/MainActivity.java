@@ -39,7 +39,7 @@ import com.example.go4lunch.models.NearbySearchResult;
 import com.example.go4lunch.models.Restaurant;
 import com.example.go4lunch.models.User;
 import com.example.go4lunch.service.InterfaceSearchResultApiService;
-import com.example.go4lunch.tools.MainHelper;
+import com.example.go4lunch.tools.PlaceSearchHelper;
 import com.example.go4lunch.tools.UrlRequest;
 import com.example.go4lunch.ui.manager.UserManager;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
@@ -268,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
         executor.execute(() -> {
             String urlRequestResult = UrlRequest.execute(url);
             try {
-                Restaurant spot = MainHelper.placeResultToRestaurant(urlRequestResult, spotId);
+                Restaurant spot = PlaceSearchHelper.placeResultToRestaurant(urlRequestResult, spotId);
                 if(isFromAutoComplete){
                     Location lastKnownLocation = service.getLastKnowLocation();
                     float[] distanceBetweenArray = new float[1];
@@ -332,7 +332,7 @@ public class MainActivity extends AppCompatActivity implements RestaurantsListAd
             ExecutorService executor = Executors.newSingleThreadExecutor();
             executor.execute(() -> {
                 String urlRequestResult = UrlRequest.execute(url);
-                ArrayList<Restaurant> restaurantList = MainHelper.placeResultToPredictions(urlRequestResult);
+                ArrayList<Restaurant> restaurantList = PlaceSearchHelper.placeResultToPredictions(urlRequestResult);
                 for(int i = 0; i < restaurantList.size(); i++){
                     service.addAutoCompleteList(restaurantList.get(i));
                 }
